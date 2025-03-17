@@ -4,11 +4,17 @@ function [hF,hB,hColor] = myOverlayInterp(ax, B,climB,xBm,zBm, overlay,clim,x,z,
 %   x:      lateral coordinate in mm
 %   z:      depth in mm
 
+if isempty(ax)
+    figure, ax = gca;
+end
+
 [X,Z] = meshgrid(x,z);
-[Xq,Zq] = meshgrid(xBm,zBm);
-imgInterp = interp2(X,Z,overlay,Xq,Zq);
-emptyRegion = isnan(imgInterp);
-newRoi = ~emptyRegion;
+
+dx = 0.02;
+xNew = xBm(1):dx:xBm(end);
+zNew = zBm(1):dx:zBm(end);
+[Xq,Zq] = meshgrid(xNew,zNew);
+overlayInterp = interp2(X,Z,overlay,Xq,Zq, 'cubic');
 
 B = repmat(mat2gray(double(B),double(climB)),[1,1,3]);
 
@@ -18,10 +24,10 @@ colormap(ax, gray)
 
 hColor = colorbar; colormap(ax, turbo);
 hold on;
-hF = imagesc(ax, xBm,zBm, imgInterp,clim);
+hF = imagesc(ax, xNew,zNew,overlayInterp,clim);
 
 % Make the foreground image transparent
-alphadata = alpha.*(newRoi);
+alphadata = alpha.*(~isnan(overlayInterp));
 set(hF,'AlphaData',alphadata);
 hold off
 axis image

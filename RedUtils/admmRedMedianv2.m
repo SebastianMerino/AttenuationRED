@@ -22,7 +22,7 @@ for k = 1:1:max_iter
     % Part2 of the ADMM, approximates the solution of
     % v = argmin_z lambda*z'*(z-denoiser(z)) +  0.5*beta||z - x - u||_2^2
     % using gradient descent
-    for j = 1:5
+    for j = 1:1
         v_reshap = reshape(v_est,m,2*ni);
         v_est1=v_reshap((1:m),(1:ni));
         v_est2=v_reshap((1:m),(ni+1:2*ni));

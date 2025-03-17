@@ -49,7 +49,8 @@ fprintf('Region of interest columns: %i, rows: %i\n\n',m,n);
 
 %% Spectrum
 % Windows for spectrum
-windowing = tukeywin(nz/2,0.25);
+% windowing = tukeywin(nz/2,0.25);
+windowing = hamming(nz/2);
 windowing = windowing*ones(1,nx);
 
 nSamples = size(sam1,3);

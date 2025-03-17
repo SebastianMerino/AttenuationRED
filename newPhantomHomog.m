@@ -16,17 +16,17 @@ if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 c0 = 1540;
 %freqL = 3.5e6; freqH = 7e6; % Depth :5.5cm, Arom acquisition
 %freqL = 3.5e6; freqH = 8e6; % Inclusion, Arom acquisition, 
- freqL = 3.5e6; freqH = 7.5e6; % Depth :5.5cm, my acquisition
+ freqL = 3.5e6; freqH = 7.5e6; % Depth : 5 cm, my acquisition
 wl = 2*c0/(freqL + freqH);
 alpha0Ref = 0.53; gammaRef = 1;
 deadband = 0.25; % [cm]
 
 % Blocksize parameters
-blockParams.xInf = -1;
+blockParams.xInf = -1; % 0.8
 blockParams.xSup = 1;
 blockParams.zInf = 3.1;
 blockParams.zSup = 5;
-blockParams.blocksize = [20 20]*wl;
+blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Plotting constants
@@ -36,7 +36,7 @@ bsRange = [-10,10];
 yLimits = [deadband,5.5];
 
 NptodB = log10(exp(1))*20;
-iAcq = 1;
+iAcq = 2;
 %%
 out = matfile(fullfile(dataDir,sampleFiles(iAcq).name));
 xBm = out.x*1e2; % [cm]
@@ -129,16 +129,20 @@ tol = 1e-3;
 line = squeeze(mean(b,[1 2]))/4/L*NptodB;
 fit = [ufr ones(length(ufr),1)]\line;
 
+line2 = squeeze(mean(sld-compensation,[1 2]))/4/L*NptodB;
+
 figure('Position',[200 200 600 400]),
-plot(ufr,line, 'LineWidth',2)
+plot(f,line2, 'LineWidth',2)
 grid on
 hold on
 plot(f,fit(1)*f + fit(2), 'k--')
+xline(freqL/1e6,'k--')
+xline(freqH/1e6,'k--')
 hold off
 title("SLD, "+sprintf('ACS = %.2f f + %.2f',fit(1),fit(2)))
 xlabel('f [MHz]')
 ylabel('Attenuation [dB/cm]')
-xlim([0 ufr(end)])
+xlim([0 ufr(end)*1.5])
 ylim([0 9])
 
 save_all_figures_to_directory(resultsDir,"sample"+iAcq+"_spec");

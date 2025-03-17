@@ -3,10 +3,8 @@
 % Created on April 24th, 2024
 % Author: Sebastian Merino
 
-function [] = simulateFocusedInc(baseDir)
-
+simuNames = {'inc2','inc3'}; 
 addpath(genpath(pwd))
-mkdir(baseDir)
 
 % medium parameters
 c0              = 1540;     % sound speed [m/s]
@@ -19,23 +17,24 @@ source_cycles   = 3.5;      % number of toneburst cycles
 source_focus    = 4e-2;   % focal length [m]
 element_pitch   = 0.3e-3;   % pitch [m]
 element_width   = 0.25e-3;  % width [m]
-focal_number    = 3;
+focal_number_Tx = 4;
+focal_number_Rx = 2;
 nLines          = 128;       % Number of beams;
 
 % grid parameters
-grid_size_x     = 5e-2;    % [m]
+grid_size_x     = 5.6e-2;    % [m]
 grid_size_y     = 4e-2;     % [m]
 
 % transducer position
-translation     = [-2e-2, 0];
+translation     = [-2.7e-2, 0];
 rotation        = 0;
 
 % computational parameters
 DATA_CAST       = 'gpuArray-single'; % set to 'single' or 'gpuArray-single'
 ppw             = 6;        % number of points per wavelength, 4 to 8
-depth           = 10e-2;     % imaging depth [m]
+depth           = 5.5e-2;   % imaging depth [m]
 cfl             = 0.3;      % CFL number, could be 0.3 or 0.5
-PMLSize         = [43,40];
+PMLSize         = [41,41];   % 
 
 %% For looping simulations
 
@@ -44,14 +43,14 @@ for iSim = 1:length(simuNames)
 
     % calculate the grid spacing based on the PPW and F0
     dx = c0 / (ppw * source_f0);   % [m]
-    
+
     % compute the size of the grid
     Nx = roundEven(grid_size_x / dx);
     Ny = roundEven(grid_size_y / dx);
-    
+
     % create the computational grid
     kgrid = kWaveGrid(Nx, dx, Ny, dx);
-    
+
     % create the time array
     t_end           = depth*2/c0;     % [s];    % total compute time [s]
     kgrid.makeTime(c0, cfl, t_end);
@@ -60,34 +59,22 @@ for iSim = 1:length(simuNames)
     rz = kgrid.x - translation(1);
     rx = kgrid.y;
 
-    % Parameters
-    switch iSim
-        case {1,4}
-            background_std = 0.004;
-            inc_std = 0.004;
-        case {2,5}
-            background_std = 0.002;
-            inc_std = 0.008;
-        case {3,6}
-            background_std = 0.008;
-            inc_std = 0.002;
-    end
-
-    if iSim<=3
-        background_alpha = 0.5;       % [dB/(MHz^y cm)]
-        inc_alpha = 1;
-    else
-        background_alpha = 1;       % [dB/(MHz^y cm)]
-        inc_alpha = 0.5;
-    end
+    background_std = 0.002;
+    inc_std = 0.008;
+    background_alpha = 0.5;       % [dB/(MHz^y cm)]
+    inc_alpha = 1;
 
     % Background
     medium = addRegionSimu([],c0,rho0,background_std,...
         background_alpha,ones(Nx,Ny));
-    
+
     % Inclusion
-    cz = 20e-3; cx = 0; 
-    r = 7e-3;
+    cz = 20e-3; cx = 0;
+    if iSim ==1 
+        r = 1e-2;
+    else
+        r = 1.1e-2;
+    end
     maskNodule = (rz-cz).^2 + (rx-cx).^2 < r^2;
     medium = addRegionSimu(medium,c0,rho0,inc_std,...
         inc_alpha,maskNodule);
@@ -122,8 +109,15 @@ for iSim = 1:length(simuNames)
     colormap(t3,"turbo")
 
     %% SOURCE
-    aperture = source_focus/focal_number;
-    element_num = floor(aperture/element_pitch);
+    aperture_Rx = source_focus/focal_number_Rx;
+    aperture_Tx = source_focus/focal_number_Tx;
+    element_num_Tx = floor(aperture_Tx/element_pitch);
+    element_num = floor(aperture_Rx/element_pitch);
+    
+    amp_vector = source_amp*ones(element_num,1);
+    no_Tx_elements = floor((element_num - element_num_Tx)/2);
+    amp_vector(1:no_Tx_elements) = 0;
+    amp_vector(end-no_Tx_elements+1:end) = 0;
 
     % set indices for each element
     ids = (0:element_num-1) - (element_num-1)/2;
@@ -133,7 +127,7 @@ for iSim = 1:length(simuNames)
     time_delays = time_delays - min(time_delays);
 
     % create time varying source signals (one for each physical element)
-    source_sig = source_amp .* toneBurst(1/kgrid.dt, source_f0, ...
+    source_sig = amp_vector .* toneBurst(1/kgrid.dt, source_f0, ...
         source_cycles, 'SignalOffset', round(time_delays / kgrid.dt));
 
     % create empty kWaveArray
@@ -151,10 +145,10 @@ for iSim = 1:length(simuNames)
 
     %% For Looping
     yCords = ( (0:nLines-1) - (nLines-1)/2 )* element_pitch; % Lateral cord of each element
-    bf_data_final = zeros(kgrid.Nt ,nLines);
+    rf_prebf = zeros(kgrid.Nt ,element_num, nLines);
 
     for iLine = 1:nLines
-        %% SOURCE  
+        %% SOURCE
         % move the array
         translation(2) = yCords(iLine);
         karray.setArrayPosition(translation, rotation)
@@ -179,36 +173,35 @@ for iSim = 1:length(simuNames)
         % set input options
         input_args = {...
             'PMLInside', false, ...
-            'PMLSize', PMLSize, ... 
+            'PMLSize', PMLSize, ...
             'DataCast', DATA_CAST, ...
             'DataRecast', true, ...
-            'PlotSim', false};
+            'PlotSim', true};
 
         % MATLAB CPU
         sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, ...
             input_args{:});
 
-                % combine sensor data
+        % combine sensor data
         combined_sensor_data = karray.combineSensorData(kgrid, sensor_data);
 
         % beamforming
         fs = 1/kgrid.dt;
-        
+
         rf_prebf(:,:,iLine) = combined_sensor_data';
     end
 
     %% VISUALISATION
     offset = 1;
-    
+
     axAxis = 0:kgrid.Nt-1; axAxis = axAxis*kgrid.dt*c0/2;
     latAxis = yCords;
-    
+
     z = axAxis(offset:end);
     x = latAxis;
     
-    save(fullfile(baseDir,"rf_prebf_"+simuName+".mat"),...
+    simuName = simuNames{iSim};
+    save("rf_prebf_"+simuName+".mat",...
         'rf_prebf','x','z','fs','time_delays');
-
-end
 
 end
