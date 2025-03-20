@@ -3,7 +3,9 @@
 % Created on April 24th, 2024
 % Author: Sebastian Merino
 
-simuNames = {'ref1','ref2','ref3','ref4','ref5','ref6'}; 
+simuNames = {'ref7','ref8','ref9','ref0'}; 
+rng(25)
+
 iSim = 1;
 addpath(genpath(pwd))
 

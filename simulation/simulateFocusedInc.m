@@ -3,7 +3,8 @@
 % Created on April 24th, 2024
 % Author: Sebastian Merino
 
-simuNames = {'inc2','inc3'}; 
+simuNames = {'inc4'}; 
+rng(23)
 addpath(genpath(pwd))
 
 % medium parameters
@@ -70,10 +71,10 @@ for iSim = 1:length(simuNames)
 
     % Inclusion
     cz = 20e-3; cx = 0;
-    if iSim ==1 
-        r = 1e-2;
+    if iSim < 3
+        r = 0.9e-2;
     else
-        r = 1.1e-2;
+        r = 1e-2;
     end
     maskNodule = (rz-cz).^2 + (rx-cx).^2 < r^2;
     medium = addRegionSimu(medium,c0,rho0,inc_std,...

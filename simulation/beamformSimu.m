@@ -1,6 +1,6 @@
 startup,
 baseDir = 'P:\smerino\simulation_acs\rf_data\25_03_14_inc';
-targetFiles = dir(fullfile(baseDir,'rf_prebf_inc2.mat'));
+targetFiles = dir(fullfile(baseDir,'rf_prebf_ref*.mat'));
 resultsDir = fullfile(baseDir,'ref');
 mkdir(resultsDir);
 % targetFiles(5)
@@ -14,7 +14,7 @@ c0 = 1540;
 ii = 1;
 
 %%
-for ii = 1:length(targetFiles)
+for ii = 6:length(targetFiles)
     file = targetFiles(ii);
     disp(file.name)
     tic
