@@ -3,14 +3,14 @@
 %% PHANTOMSSS
 startup,
 
-dataDir = 'P:\smerino\phantoms\ID316V2\06-08-2023-Generic';
+dataDir = 'Q:\smerino\phantoms\ID316V2\06-08-2023-Generic';
 sampleFiles = dir(fullfile(dataDir,'*.mat'));
 sampleFiles = sampleFiles(end-2:end);
 
-refDir = 'P:\smerino\phantoms\ID544V2\06-08-2023-Generic';
+refDir = 'Q:\smerino\phantoms\ID544V2\06-08-2023-Generic';
 refFiles = dir(fullfile(refDir,'*.mat'));
 
-resultsDir = fullfile(dataDir,'results','REDjournalFINAL');
+resultsDir = 'Q:\smerino\REDjournalResults\phantoms';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 %% Hyperparameters
@@ -274,7 +274,7 @@ muVec = T(T.method=='RSLD',:).mu;
 tabRsld = T(T.method=='RSLD',:);
 tabRed = T(T.method=='RED-MED',:);
 
-figure,
+figure('Units','centimeters', 'Position',[5 5 9 6]);
 hold on
 plot(log10(muVec),tabRsld.maeInc/2 + tabRsld.maeBack/2, 'LineWidth',lw)
 plot(log10(muVec),tabRed.maeInc/2 + tabRed.maeBack/2, 'LineWidth',lw)
@@ -293,11 +293,11 @@ optimMuRed = muVec(iMu);
 
 colors = [0    0.4470    0.7410; 0.3010    0.7450    0.9330];
 
-figure('Position',[100 100 500 300]),
+figure('Units','centimeters', 'Position',[5 5 9 6]);
 hold on
-errorbar(log10(muVec),tabRsld.meanInc,tabRsld.stdInc, ...
+errorbar(log10(muVec),tabRsld.meanInc,tabRsld.stdInc/2, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(1,:))
-errorbar(log10(muVec),tabRsld.meanBack,tabRsld.stdBack, ...
+errorbar(log10(muVec),tabRsld.meanBack,tabRsld.stdBack/2, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(2,:))
 yline(groundTruthTargets(iAcq), '--', 'Color',colors(1,:), 'LineWidth',lw*0.8)
 yline(groundTruthTargets(end), '--', 'Color',colors(2,:), 'LineWidth',lw*0.8)
@@ -311,11 +311,11 @@ title('RSLD')
 ylim([0 1.5])
 
 colors = [0   0.7410  0.4470    ; 0.3010  0.9330  0.7450]/1.2;
-figure('Position',[100 100 500 300]),
+figure('Units','centimeters', 'Position',[5 5 9 6]);
 hold on
-errorbar(log10(muVec),tabRed.meanInc,tabRed.stdInc, ...
+errorbar(log10(muVec),tabRed.meanInc,tabRed.stdInc/2, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(1,:))
-errorbar(log10(muVec),tabRed.meanBack,tabRed.stdBack, ...
+errorbar(log10(muVec),tabRed.meanBack,tabRed.stdBack/2, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(2,:))
 yline(groundTruthTargets(iAcq), '--', 'Color',colors(1,:), 'LineWidth',lw*0.8)
 yline(groundTruthTargets(end), '--', 'Color',colors(2,:), 'LineWidth',lw*0.8)
@@ -328,7 +328,7 @@ legend('Inc','Bgnd')
 title('RED')
 ylim([0 1.5])
 
-save_all_figures_to_directory(resultsDir,"sample"+iAcq+"_metrics");
+save_all_figures_to_directory(resultsDir,"sample"+iAcq+"_metrics",'svg');
 pause(0.1)
 close all,
 
@@ -364,7 +364,7 @@ myOverlayInterp(t2, bMode,dynRange,xBm,zBm, BR,attRange,x_ACS,z_ACS, 1);
 xlabel('Lateral [cm]'),
 colormap(t2,turbo)
 axis image
-title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
+title("RSLD")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
@@ -380,7 +380,7 @@ myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,x_ACS,z_ACS, 1);
 xlabel('Lateral [cm]'),
 colormap(t3,turbo)
 axis image
-title("RED, \mu=10^{"+log10(optimMuRed)+"}")
+title("RED")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
@@ -392,8 +392,10 @@ hold off
 ylim(yLimits)
 
 
-save_all_figures_to_directory(resultsDir,"sample"+iAcq+"_final");
+save_all_figures_to_directory(resultsDir,"sample"+iAcq+"_final",'svg');
 pause(0.1)
 close all,
+T = [tabRsld;tabRed];
+writetable(T,fullfile(resultsDir,'phantom.xlsx'))
 
 end
