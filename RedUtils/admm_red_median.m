@@ -18,7 +18,7 @@ for k = 1:1:max_iter
         mu_opt = mean(res(:).*res(:))/mean(res(:).*a_res(:));
         x_est = x_est + mu_opt*res;
     end
-    
+
     % relaxation
     x_hat = alpha*x_est + (1-alpha)*v_est;
 
@@ -41,15 +41,12 @@ for k = 1:1:max_iter
     % Part3 of the ADMM, update the dual variable
     u_est = u_est + x_hat - v_est;
 
+    % Stop criteria
     r(k) = norm(A*x_hat-y)^2/norm(y)^2;
-
     if r(k) < error
         break
     end
-
-
 end
 out = x_hat;
-% n_out=k;
 res_admm = r;
 end
