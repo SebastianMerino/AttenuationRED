@@ -1,7 +1,7 @@
 %% ========================= Processing loop ========================= %%
 startup,
 
-baseDir = 'P:\smerino\simulation_acs\rf_data\25_03_14_inc';
+baseDir = 'Q:\smerino\simulation_acs\rf_data\25_03_14_inc';
 dataDir = fullfile(baseDir,'bf');
 sampleFiles = dir(fullfile(dataDir,'*.mat'));
 
