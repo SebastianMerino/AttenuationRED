@@ -8,7 +8,7 @@ sampleFiles = dir(fullfile(dataDir,'*.mat'));
 refDir = fullfile(baseDir,'ref');
 refFiles = dir(fullfile(refDir,'*.mat'));
 
-resultsDir = 'Q:\smerino\REDjournalResults\phantomSimu';
+resultsDir = 'Q:\smerino\REDjournalResults\phantomSimu\anthony_med5';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 % SAMPLE 6 HAS GOOD RESULTS
@@ -131,7 +131,7 @@ back = (Xq-c1x).^2 + (Zq-c1z).^2 > (rInc+0.15).^2;
 groundTruthTargets = [1,1,1,1,1,1,0.5];
 
 %% For looping
-muVec = 10.^(0.5:0.5:7.5);
+muVec = 10.^(0.5:0.5:10);
 iMu = 8;
 %%
 for iMu = 1:length(muVec)
@@ -166,7 +166,8 @@ Metrics(iMu) = r;
 %% RED no weigths
 muRed = muVec(iMu);
 tic
-[~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
+% [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,muRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
@@ -321,7 +322,8 @@ BR = (reshape(Bn*NptodB,m,n));
 
 
 tic
-[err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,5,m,n,optimMuRed);
+% [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,5,m,n,optimMuRed);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,optimMuRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 

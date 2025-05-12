@@ -14,8 +14,11 @@ for k = 1:1:max_iter
         b = (A*y) + beta*(v_est - u_est);
         A_x_est = (A'*A*x_est) + beta*x_est;
         res = b - A_x_est;
+        if norm(res) == 0
+            break;
+        end
         a_res = (A'*A*res) + beta*res;
-        mu_opt = mean(res(:).*res(:))/mean(res(:).*a_res(:));
+        mu_opt = mean(res(:).*res(:))/(mean(res(:).*a_res(:)));
         x_est = x_est + mu_opt*res;
     end
 

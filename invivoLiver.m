@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = true;
+big = false;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -21,9 +21,9 @@ end
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 2e6; freqH = 5e6; % wide bandwidth
+freqL = 4e6; freqH = 8e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
-alpha0Ref = 0.53; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
+alpha0Ref = 0.54; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
 iAcq = 1;
 groundTruthTargets = 0.5;
 
@@ -32,19 +32,19 @@ if big
     blockParams.xInf = xRf(1); % 0.8
     blockParams.xSup = xRf(end);
     blockParams.zInf = zRf(1);
-    blockParams.zSup = 7;
+    blockParams.zSup = zRf(end);
 else
     blockParams.xInf = 0; % 0.8
     blockParams.xSup = 6;
-    blockParams.zInf = 4;
-    blockParams.zSup = 7;
+    blockParams.zInf = 5.6;
+    blockParams.zSup = 8.5;
 end
 blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Measurement ROI
-c1x = 3; c1z = 5.5;
-roiL = 4; roiLz = 2;
+c1x = 3; c1z = 7;
+roiL = 4.5; roiLz = 2.1;
 
 % Plotting constants
 dynRange = [-60,0];
@@ -123,7 +123,7 @@ tol = 1e-3;
 [~,inc] = getRegionMasks(xBm,zBm,c1x,c1z,roiL,1,roiLz);
 
 %% For looping
-muVec = 10.^(0:0.5:10);
+muVec = 10.^(1:0.5:9);
 iMu = 8;
 %%
 for iMu = 1:length(muVec)
@@ -150,7 +150,8 @@ Metrics(iMu) = r;
 %% RED no weigths
 muRed = muVec(iMu);
 tic
-[~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
+% [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,7,m,n,muRed);
+[~,~,u2]  =  admm_red_median(A'*A,A'*b(:),muRed,tol,2*m*n,1500,4,1,7,m,n,muRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
@@ -248,7 +249,7 @@ xlabel('log_{10}\mu')
 ylabel('ACS [dB/cm/MHz]')
 grid on
 legend('RSLD','RED')
-ylim([0 2.5])
+ylim([-0.5 1.5])
 
 
 
@@ -265,7 +266,8 @@ BR = (reshape(Bn*NptodB,m,n));
 
 
 tic
-[err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,5,m,n,optimMuRed);
+% [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
+[~,~,u2]  =  admm_red_median(A'*A,A'*b(:),optimMuRed,tol,2*m*n,1500,4,1,7,m,n,optimMuRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 

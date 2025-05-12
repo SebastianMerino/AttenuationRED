@@ -1,10 +1,10 @@
 %% ========================= Processing loop ========================= %%
 startup,
 
-dataDir = "Q:\smerino\REDjournalResults\rf";
+dataDir = "Q:\smerino\REDjournalResults\newLiver";
 
-sampleName = "invivoThyroid";
-resultsDir = "Q:\smerino\REDjournalResults\rf\"+sampleName;
+sampleName = "simuLiver";
+resultsDir = "Q:\smerino\REDjournalResults\newLiver\"+sampleName+"_med7";
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 
@@ -21,36 +21,36 @@ end
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 2.5e6; freqH = 8.5e6; % wide bandwidth
+freqL = 1.5e6; freqH = 5.5e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
-alpha0Ref = 0.53; gammaRef = 1;
+alpha0Ref = 0.5; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
 iAcq = 1;
-groundTruthTargets = 1.21;
+groundTruthTargets = 0.5;
 
 % Blocksize parameters
 if big
     blockParams.xInf = xRf(1); % 0.8
     blockParams.xSup = xRf(end);
-    blockParams.zInf = zRf(1);
-    blockParams.zSup = 3;
+    blockParams.zInf = 1.5;
+    blockParams.zSup = 8.5;
 else
-    blockParams.xInf = 0.4; % 0.8
-    blockParams.xSup = 2.8;
-    blockParams.zInf = 0.9;
-    blockParams.zSup = 2.2;
+    blockParams.xInf = xRf(1); % 0.8
+    blockParams.xSup = xRf(end);
+    blockParams.zInf = 5.5;
+    blockParams.zSup = 8.5;
 end
 blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Measurement ROI
-c1x = 1.6; c1z = 1.5;
-roiL = 1.8; roiLz = 0.7;
+c1x = 0; c1z = 7;
+roiL = 1; roiLz = 1.5;
 
 % Plotting constants
-dynRange = [-60,0];
-attRange = [0.2,1.8];
+dynRange = [-70,0];
+attRange = [0,1.2];
 bsRange = [-10,10];
-yLimits = [zBm(1),zBm(end)];
+yLimits = [0.1,9];
 
 NptodB = log10(exp(1))*20;
 %%
@@ -76,7 +76,7 @@ title('Sample power spectrum by depth')
 %% Generating Diffraction compensation
 % Generating references
 clear att_ref_map 
-att_ref_map(1,1,:) = (0.0076.*f.^2+0.1189.*f-0.0319)/NptodB;
+att_ref_map(1,1,:) = alpha0Ref*f/NptodB;
 
 [SpRef,SdRef,~,~,~] = getSpectrum(ref,xRf,zRf,fs,blockParams);
 
@@ -95,6 +95,9 @@ xlabel('f [MHz]')
 ylabel('z [cm]')
 title('Reference power spectrum by depth')
 
+save_all_figures_to_directory(resultsDir,sampleName+"_spec");
+pause(0.1)
+close all,
 
 %% Setting up system
 L = (zAcs(2) - zAcs(1))/(1 - blockParams.overlap)/2;   % (cm)
@@ -112,30 +115,6 @@ A2 = kron( ones(size(ufr)) , speye(m*n) );
 A = [A1 A2];
 mask = ones(m,n,p);
 tol = 1e-3;
-
-line = squeeze(mean(b,[1 2]))/4/L*NptodB;
-fit = [ufr ones(length(ufr),1)]\line;
-
-line2 = squeeze(mean(sld-compensation,[1 2]))/4/L*NptodB;
-
-figure('Position',[200 200 600 400]),
-plot(f,line2, 'LineWidth',2)
-grid on
-hold on
-plot(f,fit(1)*f + fit(2), 'k--')
-xline(freqL/1e6,'k--')
-xline(freqH/1e6,'k--')
-hold off
-title("SLD, "+sprintf('ACS = %.2f f + %.2f',fit(1),fit(2)))
-xlabel('f [MHz]')
-ylabel('Attenuation [dB/cm]')
-xlim([0 ufr(end)*1.5])
-ylim([0 15])
-
-
-save_all_figures_to_directory(resultsDir,sampleName+"_spec");
-pause(0.1)
-close all,
 
 %% Metrics
 [X,Z] = meshgrid(xAcs,zAcs);
@@ -171,8 +150,9 @@ Metrics(iMu) = r;
 %% RED no weigths
 muRed = muVec(iMu);
 tic
-% [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,7,m,n,muRed);
-[~,~,u2]  =  admm_red_median(A'*A,A'*b(:),muRed,tol,2*m*n,1500,4,1,7,m,n,muRed);
+[~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,7,m,n,muRed);
+% [~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,muRed);
+admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,muRed/1);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
@@ -255,8 +235,10 @@ legend('RSLD','RED')
 title('MAE')
 ylim([0 0.9])
 
-optimMuRsld = min(muVec(tabRsld.stdInc./tabRsld.meanInc<0.1));
-optimMuRed = min(muVec(tabRed.stdInc./tabRed.meanInc<0.1));
+[~,iMu] = min(tabRsld.maeInc);
+optimMuRsld = muVec(iMu);
+[~,iMu] = min(tabRed.maeInc);
+optimMuRed = muVec(iMu);
 
 colors = lines(8);
 figure,
@@ -265,21 +247,25 @@ errorbar(log10(muVec),tabRsld.meanInc,tabRsld.stdInc, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(1,:))
 errorbar(log10(muVec),tabRed.meanInc,tabRed.stdInc, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(5,:))
+yline(groundTruthTargets(iAcq), '--', 'Color',colors(1,:))
+yline(groundTruthTargets(end), '--', 'Color',colors(5,:))
+% xline(log10(optimMuRsld), 'Color','b', 'LineWidth',lw)
 hold off
 xlabel('log_{10}\mu')
 ylabel('ACS [dB/cm/MHz]')
 grid on
 legend('RSLD','RED')
-ylim([0 2.5])
+ylim([0 2])
 
 
 
-save_all_figures_to_directory(resultsDir,sampleName+"_metrics",'svg');
+save_all_figures_to_directory(resultsDir,sampleName+"_metrics");
 pause(0.1)
 close all,
 
 
 %% Optimal mu plot
+muRsld = muVec(iMu);
 tic
 [Bn,Cn] = AlterOpti_ADMM(A1,A2,b(:),optimMuRsld,optimMuRsld,m,n,tol,mask(:));
 toc
@@ -287,8 +273,8 @@ BR = (reshape(Bn*NptodB,m,n));
 
 
 tic
-% [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
-[~,~,u2]  =  admm_red_median(A'*A,A'*b(:),optimMuRed,tol,2*m*n,1500,4,1,7,m,n,optimMuRed);
+[err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
+% [~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,muRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 
@@ -333,7 +319,7 @@ hold off
 ylim(yLimits)
 
 
-save_all_figures_to_directory(resultsDir,sampleName+"_final",'svg');
+save_all_figures_to_directory(resultsDir,sampleName+"_final");
 pause(0.1)
 close all,
 
