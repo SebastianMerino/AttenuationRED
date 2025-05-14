@@ -4,7 +4,7 @@ startup,
 dataDir = "Q:\smerino\REDjournalResults\newLiver";
 
 sampleName = "invivoLiver";
-resultsDir = "Q:\smerino\REDjournalResults\newLiver\"+sampleName+"_med7";
+resultsDir = "Q:\smerino\REDjournalResults\newLiver\"+sampleName+"_med5";
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 
@@ -150,7 +150,7 @@ Metrics(iMu) = r;
 %% RED no weigths
 muRed = muVec(iMu);
 tic
-[~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,7,m,n,muRed);
+[~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
 % [~,~,u2]  =  admm_red_median(A'*A,A'*b(:),muRed,tol,2*m*n,1500,4,1,7,m,n,muRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
@@ -266,7 +266,7 @@ BR = (reshape(Bn*NptodB,m,n));
 
 
 tic
-[err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
+[err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,5,m,n,optimMuRed);
 % [~,~,u2]  =  admm_red_median(A'*A,A'*b(:),optimMuRed,tol,2*m*n,1500,4,1,7,m,n,optimMuRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);

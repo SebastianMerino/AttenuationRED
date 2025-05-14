@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = false;
+big = true;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -123,7 +123,7 @@ tol = 1e-3;
 [~,inc] = getRegionMasks(xBm,zBm,c1x,c1z,roiL,1,roiLz);
 
 %% For looping
-muVec = 10.^(1:0.5:9);
+muVec = 10.^(0:0.5:10);
 iMu = 8;
 %%
 for iMu = 1:length(muVec)

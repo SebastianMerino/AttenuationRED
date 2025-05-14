@@ -17,7 +17,7 @@ for k = 1:1:max_iter
 
     % Part1 of the ADMM, approximates the solution of:
     % x = argmin_z 1/(2sigma^2)||Ax-y||_2^2 + 0.5*beta||x - v + u||_2^2
-    [x_est,~] = cgs(AtArho, Aty + rho*(v_est-u_est), tol, 5,[],[],x_est);
+    [x_est,~] = cgs(AtArho, Aty + rho*(v_est-u_est), 1e-6, 5,[],[],x_est);
     
     % Part2 of the ADMM, approximates the solution of
     % v = argmin_z lambda*z'*(z-denoiser(z)) +  0.5*beta||z - x - u||_2^2

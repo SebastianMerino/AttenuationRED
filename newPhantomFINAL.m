@@ -1,48 +1,47 @@
-% ======================================================================
-% ======================================================================
-%% PHANTOMSSS
+%% ========================= Processing loop ========================= %%
 startup,
 
-dataDir = 'Q:\smerino\phantoms\ID316V2\06-08-2023-Generic';
-sampleFiles = dir(fullfile(dataDir,'*.mat'));
-sampleFiles = sampleFiles(end-2:end);
+baseDir = 'Q:\smerino\phantoms\myAcquisition\processed';
+dataDir = fullfile(baseDir,'bf');
+sampleFiles = dir(fullfile(dataDir,'T7*.mat'));
 
-refDir = 'Q:\smerino\phantoms\ID544V2\06-08-2023-Generic';
+refDir = fullfile(baseDir,'ref');
 refFiles = dir(fullfile(refDir,'*.mat'));
 
-resultsDir = 'Q:\smerino\REDjournalResults\phantoms\myVersion_med7';
+resultsDir = 'Q:\smerino\REDjournalResults\newPhantom\anthony_med7';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 2.5e6; freqH = 7.5e6;
+freqL = 3.5e6; freqH = 8e6; % wide bandwidth
+% freqL = 4e6; freqH = 7.5e6; % narrow bandwidth
+% freqL = 3.5e6; freqH = 7.5e6; % homog bandwidth
 wl = 2*c0/(freqL + freqH);
 alpha0Ref = 0.53; gammaRef = 1;
-deadband = 0.1; % [cm]
+deadband = 0.25; % [cm]
 
 % Blocksize parameters
-blockParams.xInf = 0; % 0.8
-blockParams.xSup = 4;
-blockParams.zInf = 0.2;
-blockParams.zSup = 4;
+blockParams.xInf = -2;
+blockParams.xSup = 2;
+blockParams.zInf = 0.25;
+blockParams.zSup = 5;
 blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Plotting constants
 dynRange = [-60,0];
-attRange = [0.4,1.1];
+attRange = [0.3,1.2];
 bsRange = [-10,10];
-yLimits = [0.1 3.5];
+yLimits = [deadband,5];
 
 NptodB = log10(exp(1))*20;
-iAcq = 2;
-%% For looping each phantom
-for iAcq = 2:2
+for iAcq = 1:2
+%%
 out = matfile(fullfile(dataDir,sampleFiles(iAcq).name));
 xBm = out.x*1e2; % [cm]
 zBm = out.z'*1e2; % [cm]
-sam1 = out.RF(:,:,1);
+sam1 = out.rf(:,:,1);
 fs = out.fs;
 
 % Plot region of interest B-mode image
@@ -72,8 +71,8 @@ title('Sample power spectrum by depth')
 clear att_ref_map rfRef
 
 for ff = 1:length(refFiles)
-    out = matfile(fullfile(refDir,refFiles(ff).name));
-    rfRef(:,:,ff) = out.RF(:,:,end);
+    out = load(fullfile(refDir,refFiles(ff).name));
+    rfRef(:,:,ff) = out.rf(:,:,end);
 end
 att_ref_map(1,1,:) = alpha0Ref*f.^gammaRef/NptodB;
 
@@ -119,19 +118,19 @@ tol = 1e-3;
 %% Metrics
 [X,Z] = meshgrid(x_ACS,z_ACS);
 [Xq,Zq] = meshgrid(xBm,zBm);
-c1x = 1.9; 
-c1z = 1.9;
-% c2z = 4;
+if iAcq == 1
+    c1x = 0.1;
+else
+    c1x = 0;
+end
+c1z = 2.1;
+c2z = 4;
 rInc = 0.95;
-roiL = 0.9; roiD = 0.6;
-roiLz = 1.1;
-
-% [back,inc] = getRegionMasks(xBm,zBm,c1x,c1z,roiL,roiD,roiLz);
-% [~,back] = getRegionMasks(xBm,zBm,c1x,c2z,roiL,roiD,roiLz);
+roiL = 1; roiD = 0.6;
+roiLz = 1;
 
 inc = (Xq-c1x).^2 + (Zq-c1z).^2 < (rInc-0.2).^2;
 back = (Xq-c1x).^2 + (Zq-c1z).^2 > (rInc+0.2).^2;
-
 groundTruthTargets = [0.97,0.95,0.95,0.55];
 
 % [~,backAcs] = getRegionMasks(x_ACS,z_ACS,c1x,c2z,roiL,roiD,roiLz);
@@ -147,7 +146,8 @@ groundTruthTargets = [0.97,0.95,0.95,0.55];
 % xlim([0 freqH*1.5/1e6])
 
 %% For looping
-muVec = 10.^(0.5:0.5:10);
+muVec = 10.^(0:0.5:10);
+iMu = 8;
 %%
 for iMu = 1:length(muVec)
 %% RSLD-TV
@@ -181,8 +181,8 @@ Metrics(iMu) = r;
 %% RED no weigths
 muRed = muVec(iMu);
 tic
-[err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,7,m,n,muRed);
-% [~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,muRed);
+% [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,muRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
@@ -258,7 +258,7 @@ contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
 contour(xBm,zBm,back, [0 1], 'w--', 'LineWidth',1.5)
 hold off
 ylim(yLimits)
-%%
+
 pause(0.1)
 saveas(gcf,fullfile(resultsDir,"sample"+iAcq+"_mu"+iMu+".png"))
 close,
@@ -340,8 +340,8 @@ BR = (reshape(Bn*NptodB,m,n));
 
 
 tic
-% [~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,optimMuRed);
-[err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
+% [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,5,m,n,optimMuRed);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,optimMuRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 
@@ -364,7 +364,7 @@ myOverlayInterp(t2, bMode,dynRange,xBm,zBm, BR,attRange,x_ACS,z_ACS, 1);
 xlabel('Lateral [cm]'),
 colormap(t2,turbo)
 axis image
-title("RSLD")
+title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
@@ -380,7 +380,7 @@ myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,x_ACS,z_ACS, 1);
 xlabel('Lateral [cm]'),
 colormap(t3,turbo)
 axis image
-title("RED")
+title("RED, \mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
@@ -395,7 +395,47 @@ ylim(yLimits)
 save_all_figures_to_directory(resultsDir,"sample"+iAcq+"_final",'svg');
 pause(0.1)
 close all,
-T = [tabRsld;tabRed];
-writetable(T,fullfile(resultsDir,'phantom.xlsx'))
+
 
 end
+%% ========================= Beamforming loop ========================= %%
+% startup,
+% baseDir = 'C:\Users\smerino.C084288\Documents\Datasets\SavedDataQUSPhantom';
+% acqNames = ["","_2","_3"];
+% deadBand = 0.1e-2;
+% 
+% folders = dir(baseDir);
+% folders = folders(3:end);
+% 
+% for iFolder = 1:length(folders)
+%     folderStr = folders(iFolder).name;
+%     subFolderStr = folderStr + "_F";
+% 
+%     for iAcq = 1:length(acqNames)
+%         samName = subFolderStr + acqNames(iAcq);
+%         fileName = fullfile(baseDir, folderStr, subFolderStr, samName);
+%         presetName = fileName + "_preSet.mat";
+% 
+%         if ~exist(presetName,'file'), continue; end
+%         [rf,x,z,fs] = loadAndBfLinear(fileName, presetName);
+% 
+%         bMode = db(hilbert(rf));
+%         bMode = bMode - max(bMode(z>deadBand,:),[],'all');
+%         figure,
+%         imagesc(x*1e2, z*1e2, bMode);
+%         axis image
+%         colormap gray;
+%         clim([-60 0]);
+%         colorbar
+%         ylabel('[mm]', 'FontSize', 10);
+%         xlabel('[mm]', 'FontSize', 10);
+%         ylim([deadBand*100 5])
+% 
+% 
+%         resultsDir = fullfile(baseDir, 'bf');
+%         mkdir(resultsDir)
+%         saveas(gcf, fullfile(resultsDir,samName+'.png'))
+%         pause(1), close,
+%         save(fullfile(resultsDir,samName),'rf','x','z','fs')
+%     end
+% end

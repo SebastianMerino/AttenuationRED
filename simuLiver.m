@@ -3,8 +3,8 @@ startup,
 
 dataDir = "Q:\smerino\REDjournalResults\rf";
 
-sampleName = "simuLiver";
-resultsDir = "Q:\smerino\REDjournalResults\rf\"+sampleName;
+sampleName = "simuLiverHomo";
+resultsDir = "Q:\smerino\REDjournalResults\rf\"+sampleName+"_med5";
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 
@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = true;
+big = false;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -151,7 +151,7 @@ Metrics(iMu) = r;
 muRed = muVec(iMu);
 tic
 % [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,7,m,n,muRed);
-[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,muRed);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,muRed);
 admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,muRed/1);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
@@ -274,7 +274,7 @@ BR = (reshape(Bn*NptodB,m,n));
 
 tic
 % [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
-[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,optimMuRed);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,optimMuRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 
