@@ -262,6 +262,8 @@ ylim(yLimits)
 pause(0.1)
 saveas(gcf,fullfile(resultsDir,"sample"+iAcq+"_mu"+iMu+".png"))
 close,
+
+
 end
 
 %% Metrics plots
@@ -331,6 +333,8 @@ save_all_figures_to_directory(resultsDir,"sample"+iAcq+"_metrics",'svg');
 pause(0.1)
 close all,
 
+T = [tabRsld;tabRed];
+writetable(T,fullfile(resultsDir,"phantom"+iAcq+".xlsx"))
 
 %% Optimal mu plot
 tic

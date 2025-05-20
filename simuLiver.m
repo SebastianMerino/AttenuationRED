@@ -4,15 +4,16 @@ startup,
 dataDir = "Q:\smerino\REDjournalResults\rf";
 
 sampleName = "simuLiverHomo";
-resultsDir = "Q:\smerino\REDjournalResults\rf\"+sampleName+"_med5";
+resultsDir = "Q:\smerino\REDjournalResults\rf\"+sampleName;
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 
 load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
+zRef = zRef';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = false;
+big = true;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -32,25 +33,25 @@ if big
     blockParams.xInf = xRf(1); % 0.8
     blockParams.xSup = xRf(end);
     blockParams.zInf = zRf(1);
-    blockParams.zSup = zRf(end);
+    blockParams.zSup = 5.5;
 else
     blockParams.xInf = xRf(1); % 0.8
     blockParams.xSup = xRf(end);
     blockParams.zInf = 3;
-    blockParams.zSup = zRf(end);
+    blockParams.zSup = 5.5;
 end
 blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Measurement ROI
-c1x = 0; c1z = 4;
-roiL = 2.5; roiLz = 1;
+c1x = 0; c1z = 4.2;
+roiL = 2.5; roiLz = 1.2;
 
 % Plotting constants
 dynRange = [-60,0];
 attRange = [0,1.2];
 bsRange = [-10,10];
-yLimits = [zBm(1),5];
+yLimits = [zBm(1),5.5];
 
 NptodB = log10(exp(1))*20;
 %%
@@ -78,7 +79,7 @@ title('Sample power spectrum by depth')
 clear att_ref_map 
 att_ref_map(1,1,:) = alpha0Ref*f/NptodB;
 
-[SpRef,SdRef,~,~,~] = getSpectrum(ref,xRf,zRf,fs,blockParams);
+[SpRef,SdRef,~,~,~] = getSpectrum(ref,xRef,zRef,fs,blockParams);
 
 % Plotting spectra
 spectrumRefzf = db(squeeze(mean(SpRef/2+SdRef/2, 2)));
@@ -151,8 +152,7 @@ Metrics(iMu) = r;
 muRed = muVec(iMu);
 tic
 % [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,7,m,n,muRed);
-[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,muRed);
-admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,muRed/1);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,muRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
@@ -274,7 +274,7 @@ BR = (reshape(Bn*NptodB,m,n));
 
 tic
 % [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
-[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,5,m,n,optimMuRed);
+[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,optimMuRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 

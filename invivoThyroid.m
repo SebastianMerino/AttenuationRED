@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = true;
+big = false;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -76,9 +76,11 @@ title('Sample power spectrum by depth')
 %% Generating Diffraction compensation
 % Generating references
 clear att_ref_map 
-att_ref_map(1,1,:) = (0.0076.*f.^2+0.1189.*f-0.0319)/NptodB;
-
-[SpRef,SdRef,~,~,~] = getSpectrum(ref,xRf,zRf,fs,blockParams);
+% Ref 1 and 4: Agar
+% att_ref_map(1,1,:) = (0.0076.*f.^2+0.1189.*f-0.0319)/NptodB;
+% Ref 2 and 3: Agar & Milk
+att_ref_map(1,1,:) = (0.0057*f.^2 + 0.4432*f -0.1000)/NptodB; % Ref 2 and 3
+[SpRef,SdRef,~,~,~] = getSpectrum(ref(:,:,2),xRf,zRf,fs,blockParams);
 
 % Plotting spectra
 spectrumRefzf = db(squeeze(mean(SpRef/2+SdRef/2, 2)));
