@@ -10,43 +10,85 @@ yLimits = [-0.2 1.2];
 xLimits = [0 11];
 muL = 10^0.9; muH = 10^10.1;
 
-%% Liver cases
-samples = ["simuLiver","simuLiverHomo"];
-rois = ["Small","Big"];
-for sample = samples
-    for roi = rois
-        excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
-        opts = detectImportOptions(excelFile);
-        opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
-            'double','categorical','double'});
-        T = readtable(excelFile, opts);
-        Tred = T(T.method=='RED-MED',:);
-        Trsld = T(T.method=='RSLD',:);
-        rangeRed = Tred.mu> muL & Tred.mu<=muH;
-        rangeRsld = Trsld.mu> muL & Trsld.mu<=muH;
+%% Simulated liver
+sample = "simuLiver"; roi = "Small";
+excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
+opts = detectImportOptions(excelFile);
+opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
+    'double','categorical','double'});
+T = readtable(excelFile, opts);
+Tred1 = T(T.method=='RED-MED',:);
+Trsld1 = T(T.method=='RSLD',:);
 
-        figure('Units','centimeters', 'Position',[5 5 12 6]),
-        % title(sample)
-        hold on
-        yline(gt, 'k--', 'LineWidth',lineWidth)
-        errorbar(log10(Trsld.mu(rangeRsld)),Trsld.meanInc(rangeRsld), ...
-            Trsld.stdInc(rangeRsld)/2,'vertical','d-', ...
-            'LineWidth',lineWidth, 'CapSize',3, ...
-            'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:))
-        errorbar(log10(Tred.mu(rangeRed)),Tred.meanInc(rangeRed), ...
-            Tred.stdInc(rangeRed)/2,'vertical','s-',...
-            'LineWidth',lineWidth, 'CapSize',3, ...
-            'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
-        hold off
-        xlabel('log_{10}(\mu)')
-        ylabel('ACS [dB/cm/MHz]')
-        grid on
-        xlim(xLimits)
-        ylim(yLimits)
-        legend('', 'RSLD', 'RED')
+sample = "simuLiverHomo"; roi = "Big";
+excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
+opts = detectImportOptions(excelFile);
+opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
+    'double','categorical','double'});
+T = readtable(excelFile, opts);
+Tred2 = T(T.method=='RED-MED',:);
+Trsld2 = T(T.method=='RSLD',:);
 
-    end
-end
+sample = "simuLiver"; roi = "Big";
+excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
+opts = detectImportOptions(excelFile);
+opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
+    'double','categorical','double'});
+T = readtable(excelFile, opts);
+Tred3 = T(T.method=='RED-MED',:);
+Trsld3 = T(T.method=='RSLD',:);
+rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
+rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
+
+figure('Units','centimeters', 'Position',[5 5 12 6]),
+hold on
+errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
+    Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:) + 0.2)
+errorbar(log10(Trsld2.mu(rangeRsld)),Trsld2.meanInc(rangeRsld), ...
+    Trsld2.stdInc(rangeRsld)/2,'vertical','d-.', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:))
+errorbar(log10(Trsld3.mu(rangeRsld)),Trsld3.meanInc(rangeRsld), ...
+    Trsld3.stdInc(rangeRsld)/2,'vertical','s-', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:)*0.75)
+yline(gt, 'k--', 'LineWidth',lineWidth*0.5)
+hold off
+xlabel('log_{10}(\mu)')
+ylabel('ACS [dB/cm/MHz]')
+grid on
+xlim(xLimits)
+ylim(yLimits)
+legend('A', 'B', 'C', 'Location','southeast')
+title('RSLD')
+
+figure('Units','centimeters', 'Position',[5 5 12 6]),
+hold on
+errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
+    Tred1.stdInc(rangeRed)/2,'vertical','o:',...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:) *1.2)
+errorbar(log10(Tred2.mu(rangeRed)),Tred2.meanInc(rangeRed), ...
+    Tred2.stdInc(rangeRed)/2,'vertical','d-.',...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
+errorbar(log10(Tred3.mu(rangeRsld)),Tred3.meanInc(rangeRsld), ...
+    Tred3.stdInc(rangeRsld)/2,'vertical','s-', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:)*0.75)
+yline(gt, 'k--', 'LineWidth',lineWidth*0.5)
+hold off
+xlabel('log_{10}(\mu)')
+ylabel('ACS [dB/cm/MHz]')
+grid on
+xlim(xLimits)
+ylim(yLimits)
+legend('A', 'B', 'C')
+title('RED')
+
+
 %% In vivo liver
 sample = "invivoLiver";
 roi = "Small";
@@ -57,8 +99,8 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred1 = T(T.method=='RED-MED',:);
 Trsld1 = T(T.method=='RSLD',:); 
-rangeRed1 = Tred1.mu> muL & Tred1.mu<=muH;
-rangeRsld1 = Trsld1.mu> muL & Trsld1.mu<=muH;
+rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
+rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
 
 roi = "Big";
 excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
@@ -68,17 +110,15 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred2 = T(T.method=='RED-MED',:);
 Trsld2 = T(T.method=='RSLD',:); 
-rangeRed2 = Tred2.mu> muL & Tred2.mu<=muH;
-rangeRsld2 = Trsld2.mu> muL & Trsld2.mu<=muH;
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
 hold on
-errorbar(log10(Trsld1.mu(rangeRsld1)),Trsld1.meanInc(rangeRsld1), ...
-    Trsld1.stdInc(rangeRsld1)/2,'vertical','o:', ...
+errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
+    Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:) + 0.2)
-errorbar(log10(Trsld2.mu(rangeRsld2)),Trsld2.meanInc(rangeRsld2), ...
-    Trsld2.stdInc(rangeRsld2)/2,'vertical','d-', ...
+errorbar(log10(Trsld2.mu(rangeRsld)),Trsld2.meanInc(rangeRsld), ...
+    Trsld2.stdInc(rangeRsld)/2,'vertical','d-', ...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:))
 hold off
@@ -92,12 +132,12 @@ title('RSLD')
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
 hold on
-errorbar(log10(Tred1.mu(rangeRed1)),Tred1.meanInc(rangeRed1), ...
-    Tred1.stdInc(rangeRed1)/2,'vertical','o:',...
+errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
+    Tred1.stdInc(rangeRed)/2,'vertical','o:',...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:) *1.2)
-errorbar(log10(Tred2.mu(rangeRed2)),Tred2.meanInc(rangeRed2), ...
-    Tred2.stdInc(rangeRed2)/2,'vertical','s-',...
+errorbar(log10(Tred2.mu(rangeRed)),Tred2.meanInc(rangeRed), ...
+    Tred2.stdInc(rangeRed)/2,'vertical','s-',...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
 hold off
@@ -109,46 +149,86 @@ ylim(yLimits)
 legend('iROI 1', 'iROI 2')
 title('RED')
 
-%% Thyroid cases
+%% Simulated thyroid
 yLimits = [0,2.5];
 gt = 1.21;
 
-samples = ["simuThyroid","simuThyroidHomo"];
-rois = ["Small","Big"];
-for sample = samples
-    for roi = rois
-        excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
-        opts = detectImportOptions(excelFile);
-        opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
-            'double','categorical','double'});
-        T = readtable(excelFile, opts);
-        Tred = T(T.method=='RED-MED',:);
-        Trsld = T(T.method=='RSLD',:);
-        rangeRed = Tred.mu> muL & Tred.mu<=muH;
-        rangeRsld = Trsld.mu> muL & Trsld.mu<=muH;
+sample = "simuThyroid"; roi = "Small";
+excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
+opts = detectImportOptions(excelFile);
+opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
+    'double','categorical','double'});
+T = readtable(excelFile, opts);
+Tred1 = T(T.method=='RED-MED',:);
+Trsld1 = T(T.method=='RSLD',:);
 
-        figure('Units','centimeters', 'Position',[5 5 12 6]),
-        % title(sample)
-        hold on
-        yline(gt, 'k--', 'LineWidth',lineWidth)
-        errorbar(log10(Trsld.mu(rangeRsld)),Trsld.meanInc(rangeRsld), ...
-            Trsld.stdInc(rangeRsld)/2,'vertical','d-', ...
-            'LineWidth',lineWidth, 'CapSize',3, ...
-            'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:))
-        errorbar(log10(Tred.mu(rangeRed)),Tred.meanInc(rangeRed), ...
-            Tred.stdInc(rangeRed)/2,'vertical','s-',...
-            'LineWidth',lineWidth, 'CapSize',3, ...
-            'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
-        hold off
-        xlabel('log_{10}(\mu)')
-        ylabel('ACS [dB/cm/MHz]')
-        grid on
-        xlim(xLimits)
-        ylim(yLimits)
-        legend('', 'RSLD', 'RED')
+sample = "simuThyroidHomo"; roi = "Big";
+excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
+opts = detectImportOptions(excelFile);
+opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
+    'double','categorical','double'});
+T = readtable(excelFile, opts);
+Tred2 = T(T.method=='RED-MED',:);
+Trsld2 = T(T.method=='RSLD',:);
 
-    end
-end
+sample = "simuThyroid"; roi = "Big";
+excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
+opts = detectImportOptions(excelFile);
+opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
+    'double','categorical','double'});
+T = readtable(excelFile, opts);
+Tred3 = T(T.method=='RED-MED',:);
+Trsld3 = T(T.method=='RSLD',:);
+rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
+rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
+
+figure('Units','centimeters', 'Position',[5 5 12 6]),
+hold on
+errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
+    Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:) + 0.2)
+errorbar(log10(Trsld2.mu(rangeRsld)),Trsld2.meanInc(rangeRsld), ...
+    Trsld2.stdInc(rangeRsld)/2,'vertical','d-.', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:))
+errorbar(log10(Trsld3.mu(rangeRsld)),Trsld3.meanInc(rangeRsld), ...
+    Trsld3.stdInc(rangeRsld)/2,'vertical','s-', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:)*0.75)
+yline(gt, 'k--', 'LineWidth',lineWidth*0.5)
+hold off
+xlabel('log_{10}(\mu)')
+ylabel('ACS [dB/cm/MHz]')
+grid on
+xlim(xLimits)
+ylim(yLimits)
+legend('A', 'B', 'C')
+title('RSLD')
+
+figure('Units','centimeters', 'Position',[5 5 12 6]),
+hold on
+errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
+    Tred1.stdInc(rangeRed)/2,'vertical','o:',...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:) *1.2)
+errorbar(log10(Tred2.mu(rangeRed)),Tred2.meanInc(rangeRed), ...
+    Tred2.stdInc(rangeRed)/2,'vertical','d-.',...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
+errorbar(log10(Tred3.mu(rangeRsld)),Tred3.meanInc(rangeRsld), ...
+    Tred3.stdInc(rangeRsld)/2,'vertical','s-', ...
+    'LineWidth',lineWidth, 'CapSize',3, ...
+    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:)*0.75)
+yline(gt, 'k--', 'LineWidth',lineWidth*0.5)
+hold off
+xlabel('log_{10}(\mu)')
+ylabel('ACS [dB/cm/MHz]')
+grid on
+xlim(xLimits)
+ylim(yLimits)
+legend('A', 'B', 'C')
+title('RED')
 
 %% In vivo thyroid
 sample = "invivoThyroid";
@@ -160,8 +240,8 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred1 = T(T.method=='RED-MED',:);
 Trsld1 = T(T.method=='RSLD',:); 
-rangeRed1 = Tred1.mu> muL & Tred1.mu<=muH;
-rangeRsld1 = Trsld1.mu> muL & Trsld1.mu<=muH;
+rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
+rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
 
 roi = "Big";
 excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
@@ -171,17 +251,17 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred2 = T(T.method=='RED-MED',:);
 Trsld2 = T(T.method=='RSLD',:); 
-rangeRed2 = Tred2.mu> muL & Tred2.mu<=muH;
-rangeRsld2 = Trsld2.mu> muL & Trsld2.mu<=muH;
+rangeRed = Tred2.mu> muL & Tred2.mu<=muH;
+rangeRsld = Trsld2.mu> muL & Trsld2.mu<=muH;
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
 hold on
-errorbar(log10(Trsld1.mu(rangeRsld1)),Trsld1.meanInc(rangeRsld1), ...
-    Trsld1.stdInc(rangeRsld1)/2,'vertical','o:', ...
+errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
+    Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:) + 0.2)
-errorbar(log10(Trsld2.mu(rangeRsld2)),Trsld2.meanInc(rangeRsld2), ...
-    Trsld2.stdInc(rangeRsld2)/2,'vertical','d-', ...
+errorbar(log10(Trsld2.mu(rangeRsld)),Trsld2.meanInc(rangeRsld), ...
+    Trsld2.stdInc(rangeRsld)/2,'vertical','d-', ...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:))
 hold off
@@ -195,12 +275,12 @@ title('RSLD')
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
 hold on
-errorbar(log10(Tred1.mu(rangeRed1)),Tred1.meanInc(rangeRed1), ...
-    Tred1.stdInc(rangeRed1)/2,'vertical','o:',...
+errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
+    Tred1.stdInc(rangeRed)/2,'vertical','o:',...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:) *1.2)
-errorbar(log10(Tred2.mu(rangeRed2)),Tred2.meanInc(rangeRed2), ...
-    Tred2.stdInc(rangeRed2)/2,'vertical','s-',...
+errorbar(log10(Tred2.mu(rangeRed)),Tred2.meanInc(rangeRed), ...
+    Tred2.stdInc(rangeRed)/2,'vertical','s-',...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
 hold off
