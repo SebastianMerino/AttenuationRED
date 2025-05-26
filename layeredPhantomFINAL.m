@@ -23,12 +23,12 @@ deadband = 0.2; % [cm]
 if big
     blockParams.xInf = -2;
     blockParams.xSup = 2;
-    blockParams.zInf = 0.25;
+    blockParams.zInf = 0.4;
     blockParams.zSup = 4;
 else
     blockParams.xInf = -2;
     blockParams.xSup = 2;
-    blockParams.zInf = 3;
+    blockParams.zInf = 2.2;
     blockParams.zSup = 4;
 end
 blockParams.blocksize = [15 15]*wl;
