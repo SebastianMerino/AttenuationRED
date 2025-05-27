@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = true;
+big = false;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -192,7 +192,7 @@ title("RSLD, \mu=10^{"+log10(muRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -204,7 +204,7 @@ title("RED-MED, \mu=10^{"+log10(muRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -294,7 +294,7 @@ title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -307,7 +307,7 @@ title("RED, \mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 

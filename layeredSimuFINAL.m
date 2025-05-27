@@ -1,55 +1,57 @@
 %% ========================= Processing loop ========================= %%
 startup,
 
-dataDir = 'Q:\dataAvendano_May24\SavedData2405-SMA\bf';
-refDir = 'Q:\dataAvendano_May24\SavedData2405-SMA\ref';
+baseDir = 'Q:\smerino\simulation_acs\rf_data\25_05_26_layered';
+dataDir = fullfile(baseDir,'bf');
 sampleFiles = dir(fullfile(dataDir,'*.mat'));
-refFiles = dir(fullfile(refDir,'*Ref*.mat'));
 
-resultsDir = 'Q:\smerino\REDjournalResults\layeredPhantom\final2';
+refDir = fullfile(baseDir,'ref');
+refFiles = dir(fullfile(refDir,'*.mat'));
+
+resultsDir = 'Q:\smerino\REDjournalResults\layeredSimu';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
-big = false;
+big = true;
 
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 4e6; freqH = 9e6; % wide bandwidth
+freqL = 4e6; freqH = 7.5e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
-alpha0Ref = 0.53; gammaRef = 1;
+alpha0Ref = 0.6; gammaRef = 1;
 deadband = 0.2; % [cm]
 
 % Blocksize parameters
 if big
     blockParams.xInf = -2;
     blockParams.xSup = 2;
-    blockParams.zInf = 1.5;
-    blockParams.zSup = 4;
+    blockParams.zInf = 0.2;
+    blockParams.zSup = 4.2;
 else
     blockParams.xInf = -2;
     blockParams.xSup = 2;
     blockParams.zInf = 2.2;
-    blockParams.zSup = 4;
+    blockParams.zSup = 4.2;
 end
 blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Measurement ROI
-c1x = 0; c1z = 3;
+c1x = 0; c1z = 3.2;
 roiL = 2.5; roiLz = 1.2;
-groundTruth = 0.53;
+groundTruth = 0.6;
 
 % Plotting constants
 dynRange = [-60,0];
 attRange = [0,1];
 bsRange = [-10,10];
-yLimits = [deadband,4];
+yLimits = [deadband,4.2];
 
 NptodB = log10(exp(1))*20;
 
-iAcq = 4;
+iAcq = 1;
 %%
-for iAcq = 4 %1:length(sampleFiles)
+for iAcq = 1 %1:length(sampleFiles)
 sampleName = sampleFiles(iAcq).name(1:end-4);
 if big 
     sampleName = sampleName + "_Big";
@@ -112,10 +114,6 @@ xlabel('f [MHz]')
 ylabel('z [cm]')
 title('Reference power spectrum by depth')
 
-save_all_figures_to_directory(resultsDir,sampleName+"_spec");
-pause(0.1)
-close all,
-
 %% Setting up system
 L = (zAcs(2) - zAcs(1))/(1 - blockParams.overlap)/2;   % (cm)
 sld = log(Sp) - log(Sd);
@@ -132,6 +130,30 @@ A2 = kron( ones(size(ufr)) , speye(m*n) );
 A = [A1 A2];
 mask = ones(m,n,p);
 tol = 1e-3;
+
+%%
+line = squeeze(mean(b,[1 2]))/4/L*NptodB;
+fit = [ufr ones(length(ufr),1)]\line;
+
+line2 = squeeze(mean(sld-compensation,[1 2]))/4/L*NptodB;
+
+figure('Position',[200 200 600 400]),
+plot(f,line2, 'LineWidth',2)
+grid on
+hold on
+plot(f,fit(1)*f + fit(2), 'k--')
+xline(freqL/1e6,'k--')
+xline(freqH/1e6,'k--')
+hold off
+title("SLD, "+sprintf('ACS = %.2f f + %.2f',fit(1),fit(2)))
+xlabel('f [MHz]')
+ylabel('Attenuation [dB/cm]')
+xlim([0 ufr(end)*1.5])
+ylim([0 9])
+
+save_all_figures_to_directory(resultsDir,sampleName+"_spec");
+pause(0.1)
+close all,
 
 %% Metrics
 [X,Z] = meshgrid(xAcs,zAcs);
@@ -209,7 +231,7 @@ title("RSLD, \mu=10^{"+log10(muRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
 hold off
 ylim(yLimits)
 
@@ -221,7 +243,7 @@ title("RED-MED, \mu=10^{"+log10(muRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
 hold off
 ylim(yLimits)
 
@@ -315,7 +337,7 @@ title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
 hold off
 ylim(yLimits)
 
@@ -328,7 +350,7 @@ title("RED, \mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
 hold off
 ylim(yLimits)
 
@@ -343,43 +365,32 @@ writetable(T,fullfile(resultsDir,sampleName+".xlsx"))
 end
 %% ======================== BEAMFORMING SCRIPT ======================== %%
 % startup,
-% baseDir = 'Q:\dataAvendano_May24\SavedData2405-SMA';
+% baseDir = 'Q:\smerino\simulation_acs\rf_data\25_05_26_layered';
 % resultsDir = fullfile(baseDir, 'bf');
 % mkdir(resultsDir)
 % deadBand = 0.1e-2;
 % 
-% folders = dir(baseDir);
-% folders = folders(3:end);
 % 
-% for iFolder = 1:length(folders)
-%     folderStr = folders(iFolder).name;
-%     subFolderStr = folderStr + "_F";
+% files = dir(fullfile(baseDir, "*prebf*.mat"));
+% for iFile = 1:length(files)
+%     samName = files(iFile).name(1:end-4);
+%     fileName = fullfile(files(iFile).folder,samName);
 % 
-%     files = dir(fullfile(baseDir, folderStr, subFolderStr,"*preSet.mat"));
-%     for iFile = 1:length(files)
-%         samName = files(iFile).name(1:end-11);
-%         fileName = fullfile(files(iFile).folder,samName);
-%         presetName = fileName + "_preSet.mat";
-% 
-%         disp(samName)
-%         if ~exist(presetName,'file'), continue; end
-%         [rf,x,z,fs] = loadAndBfLinear(fileName, presetName);
-% 
-%         bMode = db(hilbert(rf));
-%         bMode = bMode - max(bMode(z>deadBand,:),[],'all');
-%         figure,
-%         imagesc(x*1e2, z*1e2, bMode);
-%         axis image
-%         colormap gray;
-%         clim([-60 0]);
-%         colorbar
-%         ylabel('[mm]', 'FontSize', 10);
-%         xlabel('[mm]', 'FontSize', 10);
-%         ylim([deadBand*100 5])
+%     [rf,x,z,fs] = bfLineAcqFile(fileName,1540,2);
+%     bMode = db(hilbert(rf));
+%     bMode = bMode - max(bMode(z>deadBand,:),[],'all');
+%     figure,
+%     imagesc(x*1e2, z*1e2, bMode);
+%     axis image
+%     colormap gray;
+%     clim([-60 0]);
+%     colorbar
+%     ylabel('[mm]', 'FontSize', 10);
+%     xlabel('[mm]', 'FontSize', 10);
+%     ylim([deadBand*100 5])
 % 
 % 
-%         saveas(gcf, fullfile(resultsDir,samName+".png"))
-%         pause(1), close,
-%         save(fullfile(resultsDir,samName),'rf','x','z','fs')
-%     end
+%     saveas(gcf, fullfile(resultsDir,samName+".png"))
+%     pause(1), close,
+%     save(fullfile(resultsDir,samName),'rf','x','z','fs')
 % end

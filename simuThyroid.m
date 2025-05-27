@@ -3,7 +3,7 @@ startup,
 
 dataDir = "Q:\smerino\REDjournalResults\rf";
 
-sampleName = "simuThyroid";
+sampleName = "simuThyroidHomo";
 resultsDir = "Q:\smerino\REDjournalResults\rf\"+sampleName;
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = false;
+big = true;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -192,7 +192,7 @@ title("RSLD, \mu=10^{"+log10(muRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -204,7 +204,7 @@ title("RED-MED, \mu=10^{"+log10(muRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -264,7 +264,6 @@ close all,
 
 
 %% Optimal mu plot
-muRsld = muVec(iMu);
 tic
 [Bn,Cn] = AlterOpti_ADMM(A1,A2,b(:),optimMuRsld,optimMuRsld,m,n,tol,mask(:));
 toc
@@ -277,7 +276,7 @@ tic
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 
-figure('Units','centimeters', 'Position',[5 5 18 6]);
+figure('Units','centimeters', 'Position',[5 5 20 6]);
 tl = tiledlayout(1,3, "Padding","tight");
 
 t1 = nexttile;
@@ -294,26 +293,28 @@ ylim(yLimits)
 t2 = nexttile;
 myOverlayInterp(t2, bMode,dynRange,xBm,zBm, BR,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t2,turbo)
 axis image
-title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
+title("\mu=10^{"+log10(optimMuRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
 t3 = nexttile;
 myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t3,turbo)
 axis image
-title("RED, \mu=10^{"+log10(optimMuRed)+"}")
+title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 

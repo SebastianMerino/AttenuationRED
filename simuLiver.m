@@ -3,7 +3,7 @@ startup,
 
 dataDir = "Q:\smerino\REDjournalResults\rf";
 
-sampleName = "simuLiverHomo";
+sampleName = "simuLiver";
 resultsDir = "Q:\smerino\REDjournalResults\rf\"+sampleName;
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
@@ -13,7 +13,7 @@ zRf = zRf';
 zRef = zRef';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = true;
+big = false;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -22,7 +22,7 @@ end
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 4e6; freqH = 8e6; % wide bandwidth
+freqL = 2e6; freqH = 9e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
 alpha0Ref = 0.4; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
 iAcq = 1;
@@ -96,9 +96,6 @@ xlabel('f [MHz]')
 ylabel('z [cm]')
 title('Reference power spectrum by depth')
 
-save_all_figures_to_directory(resultsDir,sampleName+"_spec");
-pause(0.1)
-close all,
 
 %% Setting up system
 L = (zAcs(2) - zAcs(1))/(1 - blockParams.overlap)/2;   % (cm)
@@ -116,6 +113,31 @@ A2 = kron( ones(size(ufr)) , speye(m*n) );
 A = [A1 A2];
 mask = ones(m,n,p);
 tol = 1e-3;
+
+
+line = squeeze(mean(b,[1 2]))/4/L*NptodB;
+fit = [ufr ones(length(ufr),1)]\line;
+
+line2 = squeeze(mean(sld-compensation,[1 2]))/4/L*NptodB;
+
+figure('Position',[200 200 600 400]),
+plot(f,line2, 'LineWidth',2)
+grid on
+hold on
+plot(f,fit(1)*f + fit(2), 'k--')
+xline(freqL/1e6,'k--')
+xline(freqH/1e6,'k--')
+hold off
+title("SLD, "+sprintf('ACS = %.2f f + %.2f',fit(1),fit(2)))
+xlabel('f [MHz]')
+ylabel('Attenuation [dB/cm]')
+xlim([0 ufr(end)*1.5])
+ylim([0 9])
+
+%%
+save_all_figures_to_directory(resultsDir,sampleName+"_spec");
+pause(0.1)
+close all,
 
 %% Metrics
 [X,Z] = meshgrid(xAcs,zAcs);
@@ -193,7 +215,7 @@ title("RSLD, \mu=10^{"+log10(muRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -205,7 +227,7 @@ title("RED-MED, \mu=10^{"+log10(muRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -265,7 +287,6 @@ close all,
 
 
 %% Optimal mu plot
-muRsld = muVec(iMu);
 tic
 [Bn,Cn] = AlterOpti_ADMM(A1,A2,b(:),optimMuRsld,optimMuRsld,m,n,tol,mask(:));
 toc
@@ -295,26 +316,28 @@ ylim(yLimits)
 t2 = nexttile;
 myOverlayInterp(t2, bMode,dynRange,xBm,zBm, BR,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t2,turbo)
 axis image
-title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
+title("\mu=10^{"+log10(optimMuRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
 t3 = nexttile;
 myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t3,turbo)
 axis image
-title("RED, \mu=10^{"+log10(optimMuRed)+"}")
+title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 

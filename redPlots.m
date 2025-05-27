@@ -7,8 +7,11 @@ colors = lines(8);
 lineWidth = 1.5;
 gt = 0.49;
 yLimits = [-0.2 1.2];
-xLimits = [0 11];
-muL = 10^0.9; muH = 10^10.1;
+xLimitsRsld = [-1 8];
+muLrsld = 10^0; muHrsld = 10^7;
+xLimitsRed = [2 11];
+muLred = 10^3; muHred = 10^10;
+
 
 %% Simulated liver
 sample = "simuLiver"; roi = "Small";
@@ -37,8 +40,8 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred3 = T(T.method=='RED-MED',:);
 Trsld3 = T(T.method=='RSLD',:);
-rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
-rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
+rangeRed = Tred1.mu>=muLred & Tred1.mu<=muHred;
+rangeRsld = Trsld1.mu>=muLrsld & Trsld1.mu<=muHrsld;
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
 hold on
@@ -59,9 +62,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRsld)
 ylim(yLimits)
-legend('A', 'B', 'C', 'Location','southeast')
+legend('A1', 'A2', 'A3', 'Location','southeast')
 title('RSLD')
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
@@ -74,8 +77,8 @@ errorbar(log10(Tred2.mu(rangeRed)),Tred2.meanInc(rangeRed), ...
     Tred2.stdInc(rangeRed)/2,'vertical','d-.',...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
-errorbar(log10(Tred3.mu(rangeRsld)),Tred3.meanInc(rangeRsld), ...
-    Tred3.stdInc(rangeRsld)/2,'vertical','s-', ...
+errorbar(log10(Tred3.mu(rangeRed)),Tred3.meanInc(rangeRed), ...
+    Tred3.stdInc(rangeRed)/2,'vertical','s-', ...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:)*0.75)
 yline(gt, 'k--', 'LineWidth',lineWidth*0.5)
@@ -83,9 +86,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRed)
 ylim(yLimits)
-legend('A', 'B', 'C')
+legend('A1', 'A2', 'A3')
 title('RED')
 
 
@@ -99,8 +102,8 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred1 = T(T.method=='RED-MED',:);
 Trsld1 = T(T.method=='RSLD',:); 
-rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
-rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
+rangeRed = Tred1.mu>=muLred & Tred1.mu<=muHred;
+rangeRsld = Trsld1.mu>=muLrsld & Trsld1.mu<=muHrsld;
 
 roi = "Big";
 excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
@@ -125,9 +128,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRsld)
 ylim(yLimits)
-legend('iROI 1', 'iROI 2')
+legend('A1', 'A2')
 title('RSLD')
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
@@ -144,9 +147,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRed)
 ylim(yLimits)
-legend('iROI 1', 'iROI 2')
+legend('A1', 'A2')
 title('RED')
 
 %% Simulated thyroid
@@ -179,8 +182,8 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred3 = T(T.method=='RED-MED',:);
 Trsld3 = T(T.method=='RSLD',:);
-rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
-rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
+rangeRed = Tred1.mu>=muLred & Tred1.mu<=muHred;
+rangeRsld = Trsld1.mu>=muLrsld & Trsld1.mu<=muHrsld;
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
 hold on
@@ -201,9 +204,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRsld)
 ylim(yLimits)
-legend('A', 'B', 'C')
+legend('B1', 'B2', 'B3')
 title('RSLD')
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
@@ -216,8 +219,8 @@ errorbar(log10(Tred2.mu(rangeRed)),Tred2.meanInc(rangeRed), ...
     Tred2.stdInc(rangeRed)/2,'vertical','d-.',...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
-errorbar(log10(Tred3.mu(rangeRsld)),Tred3.meanInc(rangeRsld), ...
-    Tred3.stdInc(rangeRsld)/2,'vertical','s-', ...
+errorbar(log10(Tred3.mu(rangeRed)),Tred3.meanInc(rangeRed), ...
+    Tred3.stdInc(rangeRed)/2,'vertical','s-', ...
     'LineWidth',lineWidth, 'CapSize',3, ...
     'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:)*0.75)
 yline(gt, 'k--', 'LineWidth',lineWidth*0.5)
@@ -225,9 +228,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRed)
 ylim(yLimits)
-legend('A', 'B', 'C')
+legend('B1', 'B2', 'B3')
 title('RED')
 
 %% In vivo thyroid
@@ -240,8 +243,8 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred1 = T(T.method=='RED-MED',:);
 Trsld1 = T(T.method=='RSLD',:); 
-rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
-rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
+rangeRed = Tred1.mu>=muLred & Tred1.mu<=muHred;
+rangeRsld = Trsld1.mu>=muLrsld & Trsld1.mu<=muHrsld;
 
 roi = "Big";
 excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
@@ -251,8 +254,6 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred2 = T(T.method=='RED-MED',:);
 Trsld2 = T(T.method=='RSLD',:); 
-rangeRed = Tred2.mu> muL & Tred2.mu<=muH;
-rangeRsld = Trsld2.mu> muL & Trsld2.mu<=muH;
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
 hold on
@@ -268,9 +269,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRsld)
 ylim(yLimits)
-legend('iROI 1', 'iROI 2')
+legend('B1', 'B2')
 title('RSLD')
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
@@ -287,9 +288,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRed)
 ylim(yLimits)
-legend('iROI 1', 'iROI 2')
+legend('B1', 'B2')
 title('RED')
 
 save_all_figures_to_directory(resultsDir,'plot','svg')
@@ -298,14 +299,16 @@ save_all_figures_to_directory(resultsDir,'plot','svg')
 startup,
 
 resultsDir = 'Q:\smerino\REDjournalResults\plots';
-samplesDir = 'Q:\smerino\REDjournalResults\layeredPhantom\final';
+samplesDir = 'Q:\smerino\REDjournalResults\layeredPhantom\final2';
 
 colors = lines(8);
 lineWidth = 1.5;
 gt = 0.53;
 yLimits = [-0.2 1.2];
-xLimits = [0 11];
-muL = 10^0.9; muH = 10^10.1;
+xLimitsRsld = [0 11];
+muLrsld = 10^0.9; muHrsld = 10^10.1;
+xLimitsRed = [2 11];
+muLred = 10^3; muHred = 10^10;
 
 %% In vivo liver
 sample = "8544Comp_F_3_Small";
@@ -316,8 +319,8 @@ opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
 T = readtable(excelFile, opts);
 Tred1 = T(T.method=='RED-MED',:);
 Trsld1 = T(T.method=='RSLD',:); 
-rangeRed = Tred1.mu> muL & Tred1.mu<=muH;
-rangeRsld = Trsld1.mu> muL & Trsld1.mu<=muH;
+rangeRed = Tred1.mu>=muLred & Tred1.mu<=muHred;
+rangeRsld = Trsld1.mu>=muLrsld & Trsld1.mu<=muHrsld;
 
 sample = "8544Comp_F_3_Big";
 excelFile = fullfile(samplesDir,sample+".xlsx");
@@ -343,9 +346,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRsld)
 ylim(yLimits)
-legend('iROI 1', 'iROI 2')
+legend('A1', 'A2')
 title('RSLD')
 
 figure('Units','centimeters', 'Position',[5 5 12 6]),
@@ -363,9 +366,9 @@ hold off
 xlabel('log_{10}(\mu)')
 ylabel('ACS [dB/cm/MHz]')
 grid on
-xlim(xLimits)
+xlim(xLimitsRed)
 ylim(yLimits)
-legend('iROI 1', 'iROI 2')
+legend('A1', 'A2')
 title('RED')
 %%
 save_all_figures_to_directory(resultsDir,'phantoms','svg')

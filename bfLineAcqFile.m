@@ -4,11 +4,11 @@ tic
 source_f0 = 6.66e6;
 source_cycles = 3.5;
 
-out = matfile(fileName);
+out = load(fileName);
 t0 = max(out.time_delays) + source_cycles/source_f0/2;
 x = out.x; z = out.z; fs = out.fs;
 
-[nSamples,nElems,nLines] = size(out,'rf_prebf');
+[nSamples,nElems,nLines] = size(out.rf_prebf);
 
 pitch = x(2) - x(1);
 xElem = (1:nElems)*pitch;
