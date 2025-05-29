@@ -1,61 +1,67 @@
 %% ========================= Processing loop ========================= %%
 startup,
 
-dataDir = "Q:\smerino\REDjournalResults\newLiver";
+dataDir = "Q:\smerino\simulation_acs\rf_data\25_05_28_liver\bf";
+sampleFiles = dir(fullfile(dataDir,'*.mat'));
 
-sampleName = "simuLiver";
-resultsDir = "Q:\smerino\REDjournalResults\newLiver\"+sampleName+"_med7";
+refDir = "Q:\smerino\simulation_acs\rf_data\25_03_14_inc\ref";
+refFiles = dir(fullfile(refDir,'*.mat'));
+
+resultsDir = 'Q:\smerino\REDjournalResults\simuLiverNew\test';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
-
-load(fullfile(dataDir,sampleName+".mat"))
-zRf = zRf';
-xBm = xBm*100; zBm = zBm'*100;
-
-big = true;
-if big 
-    sampleName = sampleName + "Big";
-else
-    sampleName = sampleName + "Small";
-end
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 1.5e6; freqH = 5.5e6; % wide bandwidth
+freqL = 3e6; freqH = 8e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
-alpha0Ref = 0.5; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
+alpha0Ref = 0.6; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
 iAcq = 1;
-groundTruthTargets = 0.5;
+groundTruth = 0.55;
+big = true;
 
 % Blocksize parameters
 if big
-    blockParams.xInf = xRf(1); % 0.8
-    blockParams.xSup = xRf(end);
-    blockParams.zInf = 1.5;
-    blockParams.zSup = 8.5;
+    blockParams.xInf = -2; 
+    blockParams.xSup = 2;
+    blockParams.zInf = 0.5;
+    blockParams.zSup = 5.5;
 else
-    blockParams.xInf = xRf(1); % 0.8
-    blockParams.xSup = xRf(end);
-    blockParams.zInf = 5.5;
-    blockParams.zSup = 8.5;
+    blockParams.xInf = -2;
+    blockParams.xSup = 2;
+    blockParams.zInf = 3.5;
+    blockParams.zSup = 5.5;
 end
 blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Measurement ROI
-c1x = 0; c1z = 7;
-roiL = 1; roiLz = 1.5;
+c1x = 0; c1z = 4.5;
+roiL = 3; roiLz = 1.2;
 
 % Plotting constants
 dynRange = [-70,0];
 attRange = [0,1.2];
 bsRange = [-10,10];
-yLimits = [0.1,9];
+yLimits = [0.1,5.5];
 
 NptodB = log10(exp(1))*20;
 %%
+iAcq = 2;
+sampleName = sampleFiles(iAcq).name(1:end-4);
+if big, sampleName = sampleName + "big";
+else,   sampleName = sampleName + "small";
+end
+out = matfile(fullfile(dataDir,sampleFiles(iAcq).name));
+xBm = out.x*1e2; % [cm]
+zBm = out.z'*1e2; % [cm]
+sam1 = out.rf(:,:,1);
+fs = out.fs;
+bMode = db(hilbert(sam1));
+bMode = bMode - max(bMode(:));
+
 % get Spectra
-[Sp,Sd,xAcs,zAcs,f] = getSpectrum(rf,xRf,zRf,fs,blockParams);
+[Sp,Sd,xAcs,zAcs,f] = getSpectrum(sam1,xBm,zBm,fs,blockParams);
 
 % Plotting spectraxRf = xRf*100; zRf = zRf*100;
 
@@ -75,10 +81,15 @@ title('Sample power spectrum by depth')
 
 %% Generating Diffraction compensation
 % Generating references
-clear att_ref_map 
-att_ref_map(1,1,:) = alpha0Ref*f/NptodB;
+clear att_ref_map rfRef
 
-[SpRef,SdRef,~,~,~] = getSpectrum(ref,xRf,zRf,fs,blockParams);
+for ff = 1:length(refFiles)
+    out = load(fullfile(refDir,refFiles(ff).name));
+    rfRef(:,:,ff) = out.rf(:,:,end);
+end
+att_ref_map(1,1,:) = alpha0Ref*f.^gammaRef/NptodB;
+
+[SpRef,SdRef,~,~,~] = getSpectrum(rfRef,xBm,zBm,fs,blockParams);
 
 % Plotting spectra
 spectrumRefzf = db(squeeze(mean(SpRef/2+SdRef/2, 2)));
@@ -94,10 +105,6 @@ xlim([0 12])
 xlabel('f [MHz]')
 ylabel('z [cm]')
 title('Reference power spectrum by depth')
-
-save_all_figures_to_directory(resultsDir,sampleName+"_spec");
-pause(0.1)
-close all,
 
 %% Setting up system
 L = (zAcs(2) - zAcs(1))/(1 - blockParams.overlap)/2;   % (cm)
@@ -115,6 +122,30 @@ A2 = kron( ones(size(ufr)) , speye(m*n) );
 A = [A1 A2];
 mask = ones(m,n,p);
 tol = 1e-3;
+
+
+line = squeeze(mean(b,[1 2]))/4/L*NptodB;
+fit = [ufr ones(length(ufr),1)]\line;
+
+line2 = squeeze(mean(sld-compensation,[1 2]))/4/L*NptodB;
+
+figure('Position',[200 200 600 400]),
+plot(f,line2, 'LineWidth',2)
+grid on
+hold on
+plot(f,fit(1)*f + fit(2), 'k--')
+xline(freqL/1e6,'k--')
+xline(freqH/1e6,'k--')
+hold off
+title("SLD, "+sprintf('ACS = %.2f f + %.2f',fit(1),fit(2)))
+xlabel('f [MHz]')
+ylabel('Attenuation [dB/cm]')
+xlim([0 ufr(end)*1.5])
+ylim([0 9])
+
+save_all_figures_to_directory(resultsDir,sampleName+"_spec");
+pause(0.1)
+close all,
 
 %% Metrics
 [X,Z] = meshgrid(xAcs,zAcs);
@@ -138,10 +169,10 @@ CR = (reshape(Cn,m,n));
 AttInterp = interp2(X,Z,BR,Xq,Zq);
 r.meanInc = mean(AttInterp(inc),"omitnan");
 r.stdInc = std(AttInterp(inc),"omitnan");
-r.biasInc = mean( AttInterp(inc) - groundTruthTargets(iAcq),"omitnan");
-r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruthTargets(iAcq)).^2,...
+r.biasInc = mean( AttInterp(inc) - groundTruth,"omitnan");
+r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruth).^2,...
     "omitnan") );
-r.maeInc = mean(  abs( (AttInterp(inc) - groundTruthTargets(iAcq)) ),...
+r.maeInc = mean(  abs( (AttInterp(inc) - groundTruth) ),...
     "omitnan");
 r.method = 'RSLD';
 r.mu = muRsld;
@@ -160,10 +191,10 @@ CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
 AttInterp = interp2(X,Z,BRED,Xq,Zq);
 r.meanInc = mean(AttInterp(inc),"omitnan");
 r.stdInc = std(AttInterp(inc),"omitnan");
-r.biasInc = mean( AttInterp(inc) - groundTruthTargets(iAcq),"omitnan");
-r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruthTargets(iAcq)).^2,...
+r.biasInc = mean( AttInterp(inc) - groundTruth,"omitnan");
+r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruth).^2,...
     "omitnan") );
-r.maeInc = mean(  abs( (AttInterp(inc) - groundTruthTargets(iAcq)) ),...
+r.maeInc = mean(  abs( (AttInterp(inc) - groundTruth) ),...
     "omitnan");
 r.method = 'RED-MED';
 r.mu = muRed;
@@ -193,7 +224,7 @@ title("RSLD, \mu=10^{"+log10(muRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -205,7 +236,7 @@ title("RED-MED, \mu=10^{"+log10(muRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
@@ -243,12 +274,11 @@ optimMuRed = muVec(iMu);
 colors = lines(8);
 figure,
 hold on
-errorbar(log10(muVec),tabRsld.meanInc,tabRsld.stdInc, ...
+errorbar(log10(muVec),tabRsld.meanInc,tabRsld.stdInc/2, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(1,:))
-errorbar(log10(muVec),tabRed.meanInc,tabRed.stdInc, ...
+errorbar(log10(muVec),tabRed.meanInc,tabRed.stdInc/2, ...
     'd-.', 'LineWidth',lw, 'MarkerFaceColor','auto', 'Color',colors(5,:))
-yline(groundTruthTargets(iAcq), '--', 'Color',colors(1,:))
-yline(groundTruthTargets(end), '--', 'Color',colors(5,:))
+yline(groundTruth, '--', 'Color',colors(1,:))
 % xline(log10(optimMuRsld), 'Color','b', 'LineWidth',lw)
 hold off
 xlabel('log_{10}\mu')
@@ -295,32 +325,68 @@ ylim(yLimits)
 t2 = nexttile;
 myOverlayInterp(t2, bMode,dynRange,xBm,zBm, BR,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t2,turbo)
 axis image
-title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
+title("\mu=10^{"+log10(optimMuRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
 t3 = nexttile;
 myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t3,turbo)
 axis image
-title("RED, \mu=10^{"+log10(optimMuRed)+"}")
+title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
-contour(xBm,zBm,inc, [0 1], 'w--', 'LineWidth',1.5)
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
 
-save_all_figures_to_directory(resultsDir,sampleName+"_final");
+save_all_figures_to_directory(resultsDir,sampleName+"_final",'svg');
 pause(0.1)
 close all,
 
 writetable(T,fullfile(resultsDir,sampleName+".xlsx"))
+
+%% ======================== BEAMFORMING SCRIPT ======================== %%
+% startup,
+% baseDir = 'Q:\smerino\simulation_acs\rf_data\25_05_28_liver';
+% resultsDir = fullfile(baseDir, 'bf');
+% deadBand = 0.1e-2;
+% c0 = 1540;
+% fNumber = 2;
+% 
+% files = dir(fullfile(baseDir,"*.mat"));
+% for iFile = 1:length(files)
+%     fileName = fullfile(baseDir,files(iFile).name);
+%     [rf,x,z,fs] = bfLineAcqFile(fileName,c0,fNumber);
+%     bMode = db(hilbert(rf));
+%     bMode = bMode - max(bMode(z>deadBand,:),[],'all');
+%     figure,
+%     imagesc(x*1e2, z*1e2, bMode);
+%     axis image
+%     colormap gray;
+%     clim([-70 0]);
+%     colorbar
+%     ylabel('[mm]', 'FontSize', 10);
+%     xlabel('[mm]', 'FontSize', 10);
+%     ylim([deadBand*100 5])
+% 
+%     samName = files(iFile).name(1:end-4);
+%     mkdir(resultsDir)
+%     saveas(gcf, fullfile(resultsDir,samName+".png"))
+%     pause(1), close,
+% 
+%     rf = rf(z>deadBand,:);
+%     z = z(z>deadBand);
+%     save(fullfile(resultsDir,samName),'rf','x','z','fs')
+% end
