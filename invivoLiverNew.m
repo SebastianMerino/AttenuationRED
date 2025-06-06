@@ -6,10 +6,10 @@ sampleFiles = dir(fullfile(dataDir,"RF_Liver*.mat"));
 refsDir = "Q:\dataAvendano_Apr5\Ref";
 refFiles = dir(fullfile(refsDir,"RF_544_*.mat"));
 
-resultsDir = "Q:\smerino\REDjournalResults\newLiver\newSample";
+resultsDir = "Q:\smerino\REDjournalResults\newLiver\final";
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
-big = false;
+big = true;
 %% Hyperparameters
 % General parameters
 c0 = 1540;
@@ -23,12 +23,12 @@ groundTruthTargets = 0.5;
 if big
     blockParams.xInf = -2;
     blockParams.xSup = 2;
-    blockParams.zInf = 0.5;
-    blockParams.zSup = 7.8;
+    blockParams.zInf = 1.5;
+    blockParams.zSup = 8.5;
 else
-    blockParams.xInf = -1.5;
+    blockParams.xInf = -2;
     blockParams.xSup = 2;
-    blockParams.zInf = 5;
+    blockParams.zInf = 4.9;
     blockParams.zSup = 7.8;
 end
 blockParams.blocksize = [15 15]*wl;
@@ -36,13 +36,13 @@ blockParams.overlap = 0.8;
 
 % Measurement ROI
 c1x = 0.2; c1z = 6.3;
-roiL = 2.5; roiLz = 1.3;
+roiL = 2.5; roiLz = 1.2;
 
 % Plotting constants
 dynRange = [-70,0];
 attRange = [0,1.2];
 bsRange = [-10,10];
-yLimits = [0.1,8];
+yLimits = [0.1,8.5];
 
 NptodB = log10(exp(1))*20;
 

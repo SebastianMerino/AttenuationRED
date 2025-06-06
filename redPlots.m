@@ -377,7 +377,8 @@ save_all_figures_to_directory(resultsDir,'phantoms','svg')
 startup,
 
 resultsDir = 'Q:\smerino\REDjournalResults\plots';
-samplesDir = "Q:\smerino\REDjournalResults\newLiver\newSample";
+% samplesDir = "Q:\smerino\REDjournalResults\newLiver\newSample";
+samplesDir = "Q:\smerino\REDjournalResults\newLiver\newSampleLower";
 
 colors = lines(8);
 lineWidth = 1.5;
@@ -446,5 +447,6 @@ title('RED')
 
 
 
-% save_all_figures_to_directory(resultsDir,'new','svg')
+save_all_figures_to_directory(resultsDir,'new','svg')
 % close all
+winopen(resultsDir)

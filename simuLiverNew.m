@@ -7,13 +7,13 @@ sampleFiles = dir(fullfile(dataDir,'*.mat'));
 refDir = "Q:\smerino\simulation_acs\rf_data\25_03_14_inc\ref";
 refFiles = dir(fullfile(refDir,'*.mat'));
 
-resultsDir = 'Q:\smerino\REDjournalResults\simuLiverNew\test';
+resultsDir = 'Q:\smerino\REDjournalResults\simuLiverNew';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 3e6; freqH = 8e6; % wide bandwidth
+freqL = 2e6; freqH = 8e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
 alpha0Ref = 0.6; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
 iAcq = 1;

@@ -251,11 +251,6 @@ legend('RSLD','RED')
 title('MAE')
 ylim([0 0.9])
 
-[~,iMu] = min(tabRsld.maeInc);
-optimMuRsld = muVec(iMu);
-[~,iMu] = min(tabRed.maeInc,[],'omitmissing');
-optimMuRed = muVec(iMu);
-
 colors = lines(8);
 figure,
 hold on
@@ -279,7 +274,9 @@ close all,
 
 
 %% Optimal mu plot
-muRsld = muVec(iMu);
+optimMuRsld = min(tabRsld.mu(tabRsld.stdInc./tabRsld.meanInc<0.1));
+optimMuRed = min(tabRed.mu(tabRed.stdInc./tabRed.meanInc<0.1));
+
 tic
 [Bn,Cn] = AlterOpti_ADMM(A1,A2,b(:),optimMuRsld,optimMuRsld,m,n,tol,mask(:));
 toc
@@ -287,7 +284,6 @@ BR = (reshape(Bn*NptodB,m,n));
 
 
 tic
-% [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
 [~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,optimMuRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
@@ -309,11 +305,10 @@ ylim(yLimits)
 t2 = nexttile;
 myOverlayInterp(t2, bMode,dynRange,xBm,zBm, BR,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t2,turbo)
 axis image
-title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
-c = colorbar;
-c.Label.String = 'ACS [dB/cm/MHz]';
+title("\mu=10^{"+log10(optimMuRsld)+"}")
 hold on
 contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
@@ -322,9 +317,10 @@ ylim(yLimits)
 t3 = nexttile;
 myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t3,turbo)
 axis image
-title("RED, \mu=10^{"+log10(optimMuRed)+"}")
+title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on

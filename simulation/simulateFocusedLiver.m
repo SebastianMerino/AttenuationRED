@@ -65,8 +65,8 @@ for iSim = 1:length(simuFiles)
     load(fullfile(baseDir,"maps",simuName))
     % medium.density = densityMap .* (1 + stdMap.*randn(size(rx)));
     % medium.sound_speed = soundSpeedMap .* (1 + stdMap.*randn(size(rx)));
-    medium.density = rho0*(1 + 0.004.*randn(size(rx)));
-    medium.sound_speed = c0*(1 + 0.004.*randn(size(rx)));
+    medium.density = rho0*(1 + stdMap.*randn(size(rx)));
+    medium.sound_speed = c0*(1 + stdMap.*randn(size(rx)));
     medium.alpha_coeff = acsMap;
     medium.alpha_power = 1;
     medium.alpha_mode = 'no_dispersion';
@@ -189,7 +189,7 @@ for iSim = 1:length(simuFiles)
     z = axAxis(offset:end);
     x = latAxis;
     
-    save(fullfile(baseDir,"rf_prebf_homo_"+simuName),...
+    save(fullfile(baseDir,"rf_prebf_noclutter_"+simuName),...
         'rf_prebf','x','z','fs','time_delays');
 
 end
