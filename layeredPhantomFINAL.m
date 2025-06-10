@@ -274,8 +274,10 @@ close all,
 
 
 %% Optimal mu plot
-optimMuRsld = min(tabRsld.mu(tabRsld.stdInc./tabRsld.meanInc<0.1));
-optimMuRed = min(tabRed.mu(tabRed.stdInc./tabRed.meanInc<0.1));
+% optimMuRsld = min(muVec(tabRsld.stdInc./tabRsld.meanInc<0.1));
+% optimMuRed = min(muVec(tabRed.stdInc./tabRed.meanInc<0.1));
+optimMuRsld = 10^3;
+optimMuRed = 10^7;
 
 tic
 [Bn,Cn] = AlterOpti_ADMM(A1,A2,b(:),optimMuRsld,optimMuRsld,m,n,tol,mask(:));

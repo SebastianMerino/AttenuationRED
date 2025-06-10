@@ -21,8 +21,11 @@ T = readtable(excelFile, opts);
 Tred1 = T(T.method=='RED-MED',:);
 Trsld1 = T(T.method=='RSLD',:);
 
-optimMuRsld = min(Trsld1.mu(Trsld1.stdInc./Trsld1.meanInc<0.1));
-optimMuRed = min(Tred1.mu(Tred1.stdInc./Tred1.meanInc<0.1));
+% optimMuRsld = min(Trsld1.mu(Trsld1.stdInc./Trsld1.meanInc<0.1));
+% optimMuRed = min(Tred1.mu(Tred1.stdInc./Tred1.meanInc<0.1));
+optimMuRsld = 10^3;
+optimMuRed = 10^7;
+
 
 %%
 sampleName = sample;

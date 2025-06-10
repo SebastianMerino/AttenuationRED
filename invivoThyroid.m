@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = true;
+big = false;
 if big 
     sampleName = sampleName + "Big";
 else
@@ -257,9 +257,6 @@ legend('RSLD','RED')
 title('MAE')
 ylim([0 0.9])
 
-optimMuRsld = min(muVec(tabRsld.stdInc./tabRsld.meanInc<0.1));
-optimMuRed = min(muVec(tabRed.stdInc./tabRed.meanInc<0.1));
-
 colors = lines(8);
 figure,
 hold on
@@ -282,11 +279,16 @@ close all,
 
 
 %% Optimal mu plot
+
+% optimMuRsld = min(muVec(tabRsld.stdInc./tabRsld.meanInc<0.1));
+% optimMuRed = min(muVec(tabRed.stdInc./tabRed.meanInc<0.1));
+optimMuRsld = 10^3;
+optimMuRed = 10^7;
+
 tic
 [Bn,Cn] = AlterOpti_ADMM(A1,A2,b(:),optimMuRsld,optimMuRsld,m,n,tol,mask(:));
 toc
 BR = (reshape(Bn*NptodB,m,n));
-
 
 tic
 % [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,7,m,n,optimMuRed);
@@ -294,7 +296,7 @@ tic
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 
-figure('Units','centimeters', 'Position',[5 5 18 6]);
+figure('Units','centimeters', 'Position',[5 5 20 6]);
 tl = tiledlayout(1,3, "Padding","tight");
 
 t1 = nexttile;
@@ -311,9 +313,10 @@ ylim(yLimits)
 t2 = nexttile;
 myOverlayInterp(t2, bMode,dynRange,xBm,zBm, BR,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t2,turbo)
 axis image
-title("RSLD, \mu=10^{"+log10(optimMuRsld)+"}")
+title("\mu=10^{"+log10(optimMuRsld)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
@@ -324,9 +327,10 @@ ylim(yLimits)
 t3 = nexttile;
 myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
 xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
 colormap(t3,turbo)
 axis image
-title("RED, \mu=10^{"+log10(optimMuRed)+"}")
+title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on

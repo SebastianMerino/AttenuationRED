@@ -305,8 +305,8 @@ colors = lines(8);
 lineWidth = 1.5;
 gt = 0.53;
 yLimits = [-0.2 1.2];
-xLimitsRsld = [0 11];
-muLrsld = 10^0.9; muHrsld = 10^10.1;
+xLimitsRsld = [-1 8];
+muLrsld = 10^0; muHrsld = 10^7;
 xLimitsRed = [2 11];
 muLred = 10^3; muHred = 10^10;
 
