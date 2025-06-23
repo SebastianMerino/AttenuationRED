@@ -1,25 +1,24 @@
-function [res_admm,n_out , out ] = admm_red_median(A,y,lambda,error,N,max_iter,inner_iters,inner_iters2,median,m,ni,beta)
+function [r, loss , out ] = admm_red_median(A,y,mu,error,N,max_iter,inner_iters,inner_iters2,median,m,ni,rho)
 
 x_est= ones([N 1]);
 v_est=ones([N 1]);
 u_est=ones([N 1]);
 
-n_out = [x_est v_est u_est];
-alpha=1.5;
+xPrev = x_est;
+alpha = 1;
 for k = 1:1:max_iter
 
     % Part1 of the ADMM, approximates the solution of:
     % x = argmin_z 1/(2sigma^2)||Ax-y||_2^2 + 0.5*beta||x - v + u||_2^2
     for j = 1:1:inner_iters
-        b = (A*y) + beta*(v_est - u_est);
-        A_x_est = (A'*A*x_est) + beta*x_est;
-        res = b - A_x_est;
-        if norm(res) == 0
+        b = (A'*y) + rho*(v_est - u_est);
+        grad_e = b - (A'*A*x_est + rho*x_est);
+        if norm(grad_e) == 0
             break;
         end
-        a_res = (A'*A*res) + beta*res;
-        mu_opt = mean(res(:).*res(:))/(mean(res(:).*a_res(:)));
-        x_est = x_est + mu_opt*res;
+        res = (A'*A*grad_e) + rho*grad_e;
+        beta_opt = mean(grad_e(:).*grad_e(:))/(mean(grad_e(:).*res(:)));
+        x_est = x_est + beta_opt*grad_e;
     end
 
     % relaxation
@@ -38,18 +37,20 @@ for k = 1:1:max_iter
         f_v_est = [f_v_est1 f_v_est2];
         f_v_est = f_v_est(:);
 
-        v_est = (beta*(x_hat + u_est) + lambda*f_v_est)/(lambda + beta);
+        v_est = (rho*(x_hat + u_est) + mu*f_v_est)/(mu + rho);
     end
 
     % Part3 of the ADMM, update the dual variable
     u_est = u_est + x_hat - v_est;
 
     % Stop criteria
-    r(k) = norm(A*x_hat-y)^2/norm(y)^2;
-    if r(k) < error
+    r(k) = norm(xPrev - x_est)/norm(xPrev);
+    loss(k) = norm(A*x_hat-y)^2/2 + mu/2*x_hat'*(x_hat - f_v_est);
+    if r(k) < error && k>2
         break
     end
+    xPrev = x_est;
 end
 out = x_hat;
-res_admm = r;
+
 end

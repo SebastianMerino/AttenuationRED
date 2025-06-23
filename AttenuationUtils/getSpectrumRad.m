@@ -19,7 +19,7 @@ ind_x = x_inf <= x & x <= x_sup;
 ind_z = z_inf <= z & z <= z_sup;
 x = x(ind_x);
 z = z(ind_z);
-sam1 = sam1(ind_z,ind_x);
+sam1 = sam1(ind_z,ind_x,:);
 
 % Lateral samples
 wx = round(blocklines*(1-overlap_pc));  % Between windows
@@ -46,7 +46,8 @@ p = length(f);
 % fprintf('\nFrequency range: %.2f - %.2f MHz\n',freq_L*1e-6,freq_H*1e-6)
 fprintf('Blocksize x: %.2f mm, z: %.2f mm\n',nx*dx*1e3,nz*dz*1e3)
 fprintf('Blocksize in pixels nx: %i, nz: %i\n',nx,nz);
-fprintf('Region of interest columns: %i, rows: %i\n\n',m,n);
+fprintf('Region of interest columns: %i, rows: %i\n',m,n);
+fprintf('Samples: %i\n\n',size(sam1,3));
 
 %% Spectrum
 % Windows for spectrum

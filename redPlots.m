@@ -91,67 +91,8 @@ ylim(yLimits)
 legend('A1', 'A2', 'A3')
 title('RED')
 
-
-%% In vivo liver
-sample = "invivoLiver";
-roi = "Small";
-excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
-opts = detectImportOptions(excelFile);
-opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
-    'double','categorical','double'});
-T = readtable(excelFile, opts);
-Tred1 = T(T.method=='RED-MED',:);
-Trsld1 = T(T.method=='RSLD',:); 
-rangeRed = Tred1.mu>=muLred & Tred1.mu<=muHred;
-rangeRsld = Trsld1.mu>=muLrsld & Trsld1.mu<=muHrsld;
-
-roi = "Big";
-excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
-opts = detectImportOptions(excelFile);
-opts = setvartype(opts, {'double', 'double', 'double', 'double', ...
-    'double','categorical','double'});
-T = readtable(excelFile, opts);
-Tred2 = T(T.method=='RED-MED',:);
-Trsld2 = T(T.method=='RSLD',:); 
-
-figure('Units','centimeters', 'Position',[5 5 12 6]),
-hold on
-errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
-    Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
-    'LineWidth',lineWidth, 'CapSize',3, ...
-    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:) + 0.2)
-errorbar(log10(Trsld2.mu(rangeRsld)),Trsld2.meanInc(rangeRsld), ...
-    Trsld2.stdInc(rangeRsld)/2,'vertical','d-', ...
-    'LineWidth',lineWidth, 'CapSize',3, ...
-    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(1,:))
-hold off
-xlabel('log_{10}(\mu)')
-ylabel('ACS [dB/cm/MHz]')
-grid on
-xlim(xLimitsRsld)
-ylim(yLimits)
-legend('A1', 'A2')
-title('RSLD')
-
-figure('Units','centimeters', 'Position',[5 5 12 6]),
-hold on
-errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
-    Tred1.stdInc(rangeRed)/2,'vertical','o:',...
-    'LineWidth',lineWidth, 'CapSize',3, ...
-    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:) *1.2)
-errorbar(log10(Tred2.mu(rangeRed)),Tred2.meanInc(rangeRed), ...
-    Tred2.stdInc(rangeRed)/2,'vertical','s-',...
-    'LineWidth',lineWidth, 'CapSize',3, ...
-    'MarkerFaceColor','auto', 'MarkerSize',4, 'Color',colors(5,:))
-hold off
-xlabel('log_{10}(\mu)')
-ylabel('ACS [dB/cm/MHz]')
-grid on
-xlim(xLimitsRed)
-ylim(yLimits)
-legend('A1', 'A2')
-title('RED')
-
+save_all_figures_to_directory(resultsDir,'simuLiver','svg')
+close all
 %% Simulated thyroid
 yLimits = [0,2.5];
 gt = 1.21;
@@ -233,6 +174,8 @@ ylim(yLimits)
 legend('B1', 'B2', 'B3')
 title('RED')
 
+save_all_figures_to_directory(resultsDir,'simuThyroid','svg')
+close all
 %% In vivo thyroid
 sample = "invivoThyroid";
 roi = "Small";
@@ -293,13 +236,13 @@ ylim(yLimits)
 legend('B1', 'B2')
 title('RED')
 
-save_all_figures_to_directory(resultsDir,'plot','svg')
-
+save_all_figures_to_directory(resultsDir,'invivoThyroid','svg')
+close all
 %% ======================= PHANTOM DATA ======================= %%
 startup,
 
 resultsDir = 'Q:\smerino\REDjournalResults\plots';
-samplesDir = 'Q:\smerino\REDjournalResults\layeredPhantom\final2';
+samplesDir = 'Q:\smerino\REDjournalResults\layeredPhantom\final';
 
 colors = lines(8);
 lineWidth = 1.5;
@@ -372,13 +315,13 @@ legend('A1', 'A2')
 title('RED')
 %%
 save_all_figures_to_directory(resultsDir,'phantoms','svg')
-
+close all
 %% ================ NEW IN VIVO LIVER =====================%%
 startup,
 
 resultsDir = 'Q:\smerino\REDjournalResults\plots';
 % samplesDir = "Q:\smerino\REDjournalResults\newLiver\newSample";
-samplesDir = "Q:\smerino\REDjournalResults\newLiver\newSampleLower";
+samplesDir = "Q:\smerino\REDjournalResults\newLiver\final";
 
 colors = lines(8);
 lineWidth = 1.5;
@@ -447,6 +390,6 @@ title('RED')
 
 
 
-save_all_figures_to_directory(resultsDir,'new','svg')
-% close all
+save_all_figures_to_directory(resultsDir,'newLiver','svg')
+close all
 winopen(resultsDir)

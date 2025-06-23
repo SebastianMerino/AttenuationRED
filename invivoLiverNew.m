@@ -6,10 +6,10 @@ sampleFiles = dir(fullfile(dataDir,"RF_Liver*.mat"));
 refsDir = "Q:\dataAvendano_Apr5\Ref";
 refFiles = dir(fullfile(refsDir,"RF_544_*.mat"));
 
-resultsDir = "Q:\smerino\REDjournalResults\newLiver\final";
+resultsDir = "Q:\smerino\REDjournalResults\newLiver\finalMoreReg";
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
-big = false;
+big = true;
 %% Hyperparameters
 % General parameters
 c0 = 1540;
@@ -155,7 +155,7 @@ close all,
 [~,inc] = getRegionMasks(xBm,zBm,c1x,c1z,roiL,1,roiLz);
 
 % For looping
-muVec = 10.^(0:0.5:10);
+muVec = 10.^(8.5:0.5:10);
 iMu = 8;
 %%
 for iMu = 1:length(muVec)
@@ -183,7 +183,7 @@ for iMu = 1:length(muVec)
     muRed = muVec(iMu);
     tic
     % [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
-    [~,~,u2]  =  admm_red_median(A'*A,A'*b(:),muRed,tol,2*m*n,1500,4,1,7,m,n,muRed);
+    [~,~,u2]  =  admm_red_median(A'*A,A'*b(:),muRed,1e-5,2*m*n,3e4,4,1,7,m,n,muRed);
     toc,
     BRED = reshape(u2(1:end/2)*NptodB,m,n);
     CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
