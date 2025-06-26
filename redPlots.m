@@ -177,6 +177,7 @@ title('RED')
 save_all_figures_to_directory(resultsDir,'simuThyroid','svg')
 close all
 %% In vivo thyroid
+yLimits = [0,2.5];
 sample = "invivoThyroid";
 roi = "Small";
 excelFile = fullfile(samplesDir,sample,sample+roi+".xlsx");
@@ -198,7 +199,7 @@ T = readtable(excelFile, opts);
 Tred2 = T(T.method=='RED-MED',:);
 Trsld2 = T(T.method=='RSLD',:); 
 
-figure('Units','centimeters', 'Position',[5 5 12 6]),
+figure('Units','centimeters', 'Position',[5 5 8.5 5]),
 hold on
 errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
     Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
@@ -217,7 +218,7 @@ ylim(yLimits)
 legend('B1', 'B2')
 title('RSLD')
 
-figure('Units','centimeters', 'Position',[5 5 12 6]),
+figure('Units','centimeters', 'Position',[5 5 8.5 5]),
 hold on
 errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
     Tred1.stdInc(rangeRed)/2,'vertical','o:',...
@@ -274,7 +275,7 @@ T = readtable(excelFile, opts);
 Tred2 = T(T.method=='RED-MED',:);
 Trsld2 = T(T.method=='RSLD',:); 
 
-figure('Units','centimeters', 'Position',[5 5 12 6]),
+figure('Units','centimeters', 'Position',[5 5 8.5 5]),
 hold on
 errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
     Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
@@ -294,7 +295,7 @@ ylim(yLimits)
 legend('A1', 'A2')
 title('RSLD')
 
-figure('Units','centimeters', 'Position',[5 5 12 6]),
+figure('Units','centimeters', 'Position',[5 5 8.5 5]),
 hold on
 errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
     Tred1.stdInc(rangeRed)/2,'vertical','o:',...
@@ -350,7 +351,7 @@ T = readtable(excelFile, opts);
 Tred2 = T(T.method=='RED-MED',:);
 Trsld2 = T(T.method=='RSLD',:); 
 
-figure('Units','centimeters', 'Position',[5 5 12 6]),
+figure('Units','centimeters', 'Position',[5 5 8.5 5]),
 hold on
 errorbar(log10(Trsld1.mu(rangeRsld)),Trsld1.meanInc(rangeRsld), ...
     Trsld1.stdInc(rangeRsld)/2,'vertical','o:', ...
@@ -369,7 +370,7 @@ ylim(yLimits)
 legend('A1', 'A2','Location','southeast')
 title('RSLD')
 
-figure('Units','centimeters', 'Position',[5 5 12 6]),
+figure('Units','centimeters', 'Position',[5 5 8.5 5]),
 hold on
 errorbar(log10(Tred1.mu(rangeRed)),Tred1.meanInc(rangeRed), ...
     Tred1.stdInc(rangeRed)/2,'vertical','o:',...
