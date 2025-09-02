@@ -150,7 +150,102 @@ tic
 toc,
 BRED = reshape(xEst(1:end/2)*NptodB,m,n);
 CRED = reshape(xEst(end/2+1:end)*NptodB,m,n);
-%%
+
+figure('Units','centimeters', 'Position',[5 5 24 6]);
+tl = tiledlayout(1,3, "Padding","tight");
+
+t1 = nexttile;
+imagesc(xBm,zBm,bMode,dynRange)
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+axis image
+title('B-mode')
+colormap(t1,gray)
+c = colorbar;
+c.Label.String = 'dB';
+ylim(yLimits)
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,turbo)
+axis image
+title("\mu=10^{"+log10(optimMuRed)+"}")
+c = colorbar;
+c.Label.String = 'ACS [dB/cm/MHz]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
+
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, CRED,bsRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,"parula")
+axis image
+title("\mu=10^{"+log10(optimMuRed)+"}")
+c = colorbar;
+c.Label.String = 'AZC [dB/cm]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
+
+
+% Metrics
+[X,Z] = meshgrid(xAcs,zAcs);
+[Xq,Zq] = meshgrid(xBm,zBm);
+AttInterp = interp2(X,Z,BRED,Xq,Zq);
+r.meanInc = mean(AttInterp(inc),"omitnan");
+r.stdInc = std(AttInterp(inc),"omitnan");
+r.meanBack = mean(AttInterp(back),"omitnan");
+r.stdBack = std(AttInterp(back),"omitnan");
+r.biasBack = mean( AttInterp(back) - groundTruthTargets(end),"omitnan");
+r.biasInc = mean( AttInterp(inc) - groundTruthTargets(iAcq),"omitnan");
+r.rmseBack = sqrt( mean( (AttInterp(back) - groundTruthTargets(end)).^2,...
+    "omitnan") );
+r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruthTargets(iAcq)).^2,...
+    "omitnan") );
+r.maeBack = mean(  abs( (AttInterp(back) - groundTruthTargets(end)) ),...
+    "omitnan");
+r.maeInc = mean(  abs( (AttInterp(inc) - groundTruthTargets(iAcq)) ),...
+    "omitnan");
+r.cnr = abs(r.meanBack - r.meanInc)/sqrt(r.stdInc^2 + r.stdBack^2);
+disp(r)
+
+% Convergence
+figure('Position',[100 100 600 800]),
+tiledlayout(2,1)
+nexttile,
+semilogy(xDiff(2:end), 'LineWidth',2)
+xlabel('Iterations')
+ylabel('||\Delta x||')
+grid on
+
+nexttile,
+semilogy(fpError(2:end), 'LineWidth',2)
+xlabel('Iterations')
+ylabel('FP error')
+grid on
+
+
+%% ================== Mixed denoiser ==========================
+% Initialization
+[x0,~] = cgs(A'*A,A'*b(:));
+
+denoiser = mixedDenoiserHandle(m,n,7,1e-3);
+optimMuRed = 10^4; tol = 1e-4; L = 1.01;
+tic
+[xDiff, fpError, xEst] = redPhaseGradient(A,b(:),optimMuRed,L,denoiser,tol,1500,x0);
+toc,
+BRED = reshape(xEst(1:end/2)*NptodB,m,n);
+CRED = reshape(xEst(end/2+1:end)*NptodB,m,n);
+
 figure('Units','centimeters', 'Position',[5 5 24 6]);
 tl = tiledlayout(1,3, "Padding","tight");
 
@@ -400,4 +495,19 @@ for k = 1:maxIter
     %     pause(1)
     % end
 end
+end
+
+
+
+function f = mixedDenoiserHandle(m,n,kernel,lambda)
+    function fx = mixedDenoiser(x)
+    x = reshape(x,[m,n,2]);
+    x1 = x(:,:,1);
+    x2 = x(:,:,2);
+    x1 = medfilt2(x1, [kernel(1),kernel(1)],'symmetric');
+    x2 = sign(x2).*max(0,abs(x2)-lambda);
+    fx= cat(3,x1,x2);
+    fx = fx(:);
+    end
+    f = @mixedDenoiser;
 end
