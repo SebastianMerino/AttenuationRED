@@ -1,8 +1,10 @@
 %% ========================= Processing loop ========================= %%
+% Script to test optimzation algorithms on the layered phantom data. 
+
 startup,
 
-dataDir = 'Q:\dataAvendano_May24\SavedData2405-SMA\bf';
-refDir = 'Q:\dataAvendano_May24\SavedData2405-SMA\ref';
+dataDir = 'Q:\NonClinicalAvendanoData\May24_Focused_Phantoms_ComposedPhantoms\SavedData2405-SMA\bf';
+refDir = 'Q:\NonClinicalAvendanoData\May24_Focused_Phantoms_ComposedPhantoms\SavedData2405-SMA\ref';
 sampleFiles = dir(fullfile(dataDir,'*.mat'));
 refFiles = dir(fullfile(refDir,'*Ref*.mat'));
 
@@ -134,16 +136,17 @@ tol = 1e-3;
 [~,inc] = getRegionMasks(xBm,zBm,c1x,c1z,roiL,1,roiLz);
 
 
-
 %% Optimal mu plot
-optimMuRed = 10^7;
+denoiser = medianDenoiserHandle(m,n,[7 3]);
+mu = 10^7;
+tol = 1e-4;
 tic
-[res,loss,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,tol,size(A'*b(:),1),3e5,4,1,7,m,n,optimMuRed);
+[res,loss,u1] = admm_red_median(A'*A,A'*b(:),mu,tol,size(A'*b(:),1),1500,4,1,7,m,n,mu);
 toc,
-BRED = reshape(u2(1:end/2)*NptodB,m,n);
+BRED = reshape(u1(1:end/2)*NptodB,m,n);
 
-figure('Units','centimeters', 'Position',[5 5 18 6]);
-tl = tiledlayout(1,2, "Padding","tight");
+figure('Units','centimeters', 'Position',[5 5 24 6]);
+tl = tiledlayout(1,3, "Padding","tight");
 
 t1 = nexttile;
 imagesc(xBm,zBm,bMode,dynRange)
@@ -162,7 +165,7 @@ xlabel('Lateral [cm]'),
 ylabel('Axial [cm]')
 colormap(t3,turbo)
 axis image
-title("\mu=10^{"+log10(optimMuRed)+"}")
+title("\mu=10^{"+log10(mu)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
@@ -170,6 +173,19 @@ contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
 
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, CRED,bsRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,"parula")
+axis image
+title("\mu=10^{"+log10(mu)+"}")
+c = colorbar;
+c.Label.String = 'AZC [dB/cm]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
 
 % Metrics
 [X,Z] = meshgrid(xAcs,zAcs);
@@ -183,7 +199,7 @@ r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruth).^2,...
 r.maeInc = mean(  abs( (AttInterp(inc) - groundTruth) ),...
     "omitnan");
 disp(r)
-
+disp(['Cost: ',num2str(norm(A*u1-b(:))^2/2 + mu/2*u1'*(u1 - denoiser(u1)))])
 
 % Convergence
 figure('Position',[100 100 600 800]),
@@ -208,15 +224,15 @@ grid on
 
 
 %% ============================== MY METHOD =============================
-optimMuRed = 10^4; tol = 1e-5;
+mu = 10^4; tol = 1e-4;
 tic
-[res,loss,u2] = admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,1500,7,m,n,optimMuRed);
+[res,loss,u2] = admmRedMedianv2(A,b(:),mu,tol,2*m*n,1500,7,m,n,mu);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
 
-figure('Units','centimeters', 'Position',[5 5 18 6]);
-tl = tiledlayout(1,2, "Padding","tight");
+figure('Units','centimeters', 'Position',[5 5 24 6]);
+tl = tiledlayout(1,3, "Padding","tight");
 
 t1 = nexttile;
 imagesc(xBm,zBm,bMode,dynRange)
@@ -235,13 +251,28 @@ xlabel('Lateral [cm]'),
 ylabel('Axial [cm]')
 colormap(t3,turbo)
 axis image
-title("\mu=10^{"+log10(optimMuRed)+"}")
+title("\mu=10^{"+log10(mu)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
 hold on
 contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
 hold off
 ylim(yLimits)
+
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, CRED,bsRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,"parula")
+axis image
+title("\mu=10^{"+log10(mu)+"}")
+c = colorbar;
+c.Label.String = 'AZC [dB/cm]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
+
 
 % Metrics
 [X,Z] = meshgrid(xAcs,zAcs);
@@ -255,6 +286,7 @@ r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruth).^2,...
 r.maeInc = mean(  abs( (AttInterp(inc) - groundTruth) ),...
     "omitnan");
 disp(r)
+disp(['Cost: ',num2str(norm(A*u2-b(:))^2/2 + mu/2*u2'*(u2 - denoiser(u2)))])
 
 % Convergence
 figure('Position',[100 100 600 800]),
@@ -262,7 +294,7 @@ tiledlayout(3,1)
 nexttile,
 semilogy(res(2:end), 'LineWidth',2)
 xlabel('Iterations')
-ylabel('||\Delta x||/||x||')
+ylabel('||\Delta x||')
 grid on
 
 nexttile,
@@ -277,7 +309,167 @@ xlabel('Iterations')
 ylabel('\Delta Objective function')
 grid on
 
+%% ================== NEW OPTIMIZER ==========================
+denoiser = medianDenoiserHandle(m,n,[7 3]);
+mu = 10^4; tol = 1e-4; L = 1.01;
+tic
+[xDiff, fpError, xEst] = redPhaseGradient(A,b(:),mu,L,denoiser,tol,1500);
+toc,
+BRED = reshape(xEst(1:end/2)*NptodB,m,n);
+CRED = reshape(xEst(end/2+1:end)*NptodB,m,n);
 
+figure('Units','centimeters', 'Position',[5 5 24 6]);
+tl = tiledlayout(1,3, "Padding","tight");
+
+t1 = nexttile;
+imagesc(xBm,zBm,bMode,dynRange)
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+axis image
+title('B-mode')
+colormap(t1,gray)
+c = colorbar;
+c.Label.String = 'dB';
+ylim(yLimits)
+
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,turbo)
+axis image
+title("\mu=10^{"+log10(mu)+"}")
+c = colorbar;
+c.Label.String = 'ACS [dB/cm/MHz]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
+
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, CRED,bsRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,"parula")
+axis image
+title("\mu=10^{"+log10(mu)+"}")
+c = colorbar;
+c.Label.String = 'AZC [dB/cm]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
+
+
+% Metrics
+[X,Z] = meshgrid(xAcs,zAcs);
+[Xq,Zq] = meshgrid(xBm,zBm);
+AttInterp = interp2(X,Z,BRED,Xq,Zq);
+r.meanInc = mean(AttInterp(inc),"omitnan");
+r.stdInc = std(AttInterp(inc),"omitnan");
+r.biasInc = mean( AttInterp(inc) - groundTruth,"omitnan");
+r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruth).^2,...
+    "omitnan") );
+r.maeInc = mean(  abs( (AttInterp(inc) - groundTruth) ),...
+    "omitnan");
+disp(r)
+disp(['Cost: ',num2str(norm(A*xEst-b(:))^2/2 + mu/2*xEst'*(xEst - denoiser(xEst)))])
+
+% Convergence
+figure('Position',[100 100 600 800]),
+tiledlayout(2,1)
+nexttile,
+semilogy(xDiff(2:end), 'LineWidth',2)
+xlabel('Iterations')
+ylabel('||\Delta x||')
+grid on
+
+nexttile,
+semilogy(fpError(2:end), 'LineWidth',2)
+xlabel('Iterations')
+ylabel('FP error')
+grid on
+
+%% ================== NEW FASTER OPTIMIZER ==========================
+denoiser = medianDenoiserHandle(m,n,[7 3]);
+mu = 10^4; tol = 1e-4; L = 1.5;
+tic
+[xDiff, fpError, xEst] = redAcceleratedPG(A,b(:),mu,L,denoiser,tol,1500);
+toc,
+BRED = reshape(xEst(1:end/2)*NptodB,m,n);
+CRED = reshape(xEst(end/2+1:end)*NptodB,m,n);
+
+figure('Units','centimeters', 'Position',[5 5 24 6]);
+tl = tiledlayout(1,3, "Padding","tight");
+
+t1 = nexttile;
+imagesc(xBm,zBm,bMode,dynRange)
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+axis image
+title('B-mode')
+colormap(t1,gray)
+c = colorbar;
+c.Label.String = 'dB';
+ylim(yLimits)
+
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,turbo)
+axis image
+title("\mu=10^{"+log10(mu)+"}")
+c = colorbar;
+c.Label.String = 'ACS [dB/cm/MHz]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
+
+t3 = nexttile;
+myOverlayInterp(t3, bMode,dynRange,xBm,zBm, CRED,bsRange,xAcs,zAcs, 1);
+xlabel('Lateral [cm]'),
+ylabel('Axial [cm]')
+colormap(t3,"parula")
+axis image
+title("\mu=10^{"+log10(mu)+"}")
+c = colorbar;
+c.Label.String = 'AZC [dB/cm]';
+hold on
+contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+hold off
+ylim(yLimits)
+
+
+% Metrics
+[X,Z] = meshgrid(xAcs,zAcs);
+[Xq,Zq] = meshgrid(xBm,zBm);
+AttInterp = interp2(X,Z,BRED,Xq,Zq);
+r.meanInc = mean(AttInterp(inc),"omitnan");
+r.stdInc = std(AttInterp(inc),"omitnan");
+r.biasInc = mean( AttInterp(inc) - groundTruth,"omitnan");
+r.rmseInc = sqrt( mean( (AttInterp(inc) - groundTruth).^2,...
+    "omitnan") );
+r.maeInc = mean(  abs( (AttInterp(inc) - groundTruth) ),...
+    "omitnan");
+disp(r)
+disp(['Cost: ',num2str(norm(A*xEst-b(:))^2/2 + mu/2*xEst'*(xEst - denoiser(xEst)))])
+
+% Convergence
+figure('Position',[100 100 600 800]),
+tiledlayout(2,1)
+nexttile,
+semilogy(xDiff(2:end), 'LineWidth',2)
+xlabel('Iterations')
+ylabel('||\Delta x||')
+grid on
+
+nexttile,
+semilogy(fpError(2:end), 'LineWidth',2)
+xlabel('Iterations')
+ylabel('FP error')
+grid on
 
 %%
 function [r, loss , out ] = admm_red_median(A,y,mu,error,N,max_iter,inner_iters,inner_iters2,median,m,ni,rho)
@@ -314,7 +506,7 @@ for k = 1:1:max_iter
         v_est1=v_est((1:m),(1:ni));
         v_est2=v_est((1:m),(ni+1:2*ni));
         f_v_est1 = medfilt2(v_est1, [median median],'symmetric');
-        f_v_est2 = medfilt2(v_est2, [median median],'symmetric');
+        f_v_est2 = medfilt2(v_est2, [3 3],'symmetric');
 
         f_v_est = [f_v_est1 f_v_est2];
         f_v_est = f_v_est(:);
@@ -326,7 +518,7 @@ for k = 1:1:max_iter
     u_est = u_est + x_hat - v_est;
 
     % Stop criteria
-    r(k) = norm(xPrev - x_est);
+    r(k) = norm(xPrev - x_est)/norm(xPrev);
     loss(k) = norm(A*x_hat-y)^2/2 + mu/2*x_hat'*(x_hat - f_v_est);
     if r(k) < error && k>2
         break
@@ -386,4 +578,76 @@ end
 out = x_est;
 res_admm = r;
 
+end
+
+
+function [xDiff, fpError, xk] = redPhaseGradient(A,y,lambda,L,denoiser,tol,maxIter)
+xDiff = nan(maxIter,1);
+fpError = nan(maxIter,1);
+
+AtA = A'*A; Aty = A'*y;
+[xk,~] = cgs(AtA,Aty);
+N = length(xk);
+vk = zeros(N,1);
+xPrev = xk;
+for k = 1:maxIter
+    % First step: argmin 1/2 || Ax - y ||^2 + lambda*L/2 || x - v ||^2
+    [xk,~] = cgs(AtA + lambda*L*speye(N), Aty+lambda*L*vk);
+
+    % Denoiser step
+    fxk = denoiser(xk);
+    vk = fxk/L - (1-L)/L*xk;
+
+    xDiff(k) = norm(xPrev - xk)/norm(xk);
+    fpError(k) = norm( AtA*xk - Aty + lambda*(xk - fxk) )/N;
+    if xDiff(k) < tol && k>2
+        break
+    end
+    xPrev = xk;
+end
+end
+
+function [xDiff, fpError, xk] = redAcceleratedPG(A,y,lambda,L,denoiser,tol,maxIter)
+xDiff = nan(maxIter,1);
+fpError = nan(maxIter,1);
+
+AtA = A'*A; Aty = A'*y;
+[xk,~] = cgs(AtA,Aty);
+N = length(xk);
+vk = zeros(N,1);
+xPrev = xk;
+tPrev = 1;
+for k = 1:maxIter
+    % First step: argmin 1/2 || Ax - y ||^2 + lambda*L/2 || x - v ||^2
+    [xk,~] = cgs(AtA + lambda*L*speye(N), Aty+lambda*L*vk);
+
+    % Acceleration
+    tk = (1 + sqrt(1 + 4*tPrev^2))/2;
+    zk = xk + (tPrev-1)/tk*(xk - xPrev);
+    
+    % Denoiser step
+    vk = denoiser(zk)/L - (1-L)/L*zk;
+
+    xDiff(k) = norm(xPrev - xk)/norm(xk);
+    fpError(k) = norm( AtA*xk - Aty + lambda*(xk - denoiser(xk)) )/N;
+    if xDiff(k) < tol && k>2
+        break
+    end
+    xPrev = xk;
+    tPrev = tk;
+end
+end
+
+
+function f = medianDenoiserHandle(m,n,kernel)
+    function fx = medianDenoiser(x)
+    x = reshape(x,[m,n,2]);
+    x1 = x(:,:,1);
+    x2 = x(:,:,2);
+    x1 = medfilt2(x1, [kernel(1),kernel(1)],'symmetric');
+    x2 = medfilt2(x2, [kernel(2),kernel(2)],'symmetric');
+    fx= cat(3,x1,x2);
+    fx = fx(:);
+    end
+    f = @medianDenoiser;
 end
