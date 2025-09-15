@@ -138,10 +138,6 @@ groundTruthTargets = [0.97,0.95,0.95,0.55];
 %% ================== median denoiser ==========================
 % Initialization
 [x0,~] = cgs(A'*A,A'*b(:));
-% x0 = reshape(x0,m,n,2);
-% x0(:,:,1) = mean(x0(:,:,1),'all');
-% x0(:,:,2) = mean(x0(:,:,2),'all');
-% x0 = x0(:);
 
 denoiser = medianDenoiserHandle(m,n,[7 3]);
 optimMuRed = 10^4; tol = 1e-4; L = 1;
@@ -164,9 +160,9 @@ colormap(t1,gray)
 c = colorbar;
 c.Label.String = 'dB';
 ylim(yLimits)
-hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
-hold off
+% hold on
+% contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+% hold off
 
 t3 = nexttile;
 myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
@@ -177,9 +173,9 @@ axis image
 title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
-hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
-hold off
+% hold on
+% contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+% hold off
 ylim(yLimits)
 
 t3 = nexttile;
@@ -191,9 +187,9 @@ axis image
 title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'AZC [dB/cm]';
-hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
-hold off
+% hold on
+% contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+% hold off
 ylim(yLimits)
 
 
@@ -237,9 +233,8 @@ grid on
 %% ================== Mixed denoiser ==========================
 % Initialization
 [x0,~] = cgs(A'*A,A'*b(:));
-
-denoiser = mixedDenoiserHandle(m,n,7,1e-3);
-optimMuRed = 10^4; tol = 1e-4; L = 1.01;
+optimMuRed = 10^3.5; tol = 1e-4; L = 1.01;
+denoiser = mixedDenoiserHandle(m,n,7,1/optimMuRed);
 tic
 [xDiff, fpError, xEst] = redPhaseGradient(A,b(:),optimMuRed,L,denoiser,tol,1500,x0);
 toc,
@@ -259,9 +254,9 @@ colormap(t1,gray)
 c = colorbar;
 c.Label.String = 'dB';
 ylim(yLimits)
-hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
-hold off
+% hold on
+% contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+% hold off
 
 t3 = nexttile;
 myOverlayInterp(t3, bMode,dynRange,xBm,zBm, BRED,attRange,xAcs,zAcs, 1);
@@ -272,9 +267,9 @@ axis image
 title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'ACS [dB/cm/MHz]';
-hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
-hold off
+% hold on
+% contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+% hold off
 ylim(yLimits)
 
 t3 = nexttile;
@@ -286,9 +281,9 @@ axis image
 title("\mu=10^{"+log10(optimMuRed)+"}")
 c = colorbar;
 c.Label.String = 'AZC [dB/cm]';
-hold on
-contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
-hold off
+% hold on
+% contour(xBm,zBm,inc, [0 1], 'w', 'LineWidth',2)
+% hold off
 ylim(yLimits)
 
 
@@ -464,7 +459,8 @@ fpError = nan(maxIter,1);
 AtA = A'*A; Aty = A'*y;
 N = length(x0);
 xk = x0;
-vk = x0;
+fxk = denoiser(xk);
+vk = fxk/L - (1-L)/L*xk;
 xPrev = x0;
 
 % figure, tiledlayout(1,2),
@@ -505,7 +501,8 @@ function f = mixedDenoiserHandle(m,n,kernel,lambda)
     x1 = x(:,:,1);
     x2 = x(:,:,2);
     x1 = medfilt2(x1, [kernel(1),kernel(1)],'symmetric');
-    x2 = sign(x2).*max(0,abs(x2)-lambda);
+    x2 = sign(x2).*max(0,abs(x2)-lambda); % L1-norm denoising
+    % x2 = x2/(1+lambda); % L2-norm denoising
     fx= cat(3,x1,x2);
     fx = fx(:);
     end

@@ -137,13 +137,14 @@ tol = 1e-3;
 
 
 %% Optimal mu plot
-denoiser = medianDenoiserHandle(m,n,[7 3]);
-mu = 10^7;
-tol = 1e-4;
+denoiser = medianDenoiserHandle(m,n,[7 7]);
+mu = 10^4;
+tol = 1e-5;
 tic
 [res,loss,u1] = admm_red_median(A'*A,A'*b(:),mu,tol,size(A'*b(:),1),1500,4,1,7,m,n,mu);
 toc,
 BRED = reshape(u1(1:end/2)*NptodB,m,n);
+CRED = reshape(u1(end/2+1:end)*NptodB,m,n);
 
 figure('Units','centimeters', 'Position',[5 5 24 6]);
 tl = tiledlayout(1,3, "Padding","tight");
@@ -310,7 +311,7 @@ ylabel('\Delta Objective function')
 grid on
 
 %% ================== NEW OPTIMIZER ==========================
-denoiser = medianDenoiserHandle(m,n,[7 3]);
+denoiser = medianDenoiserHandle(m,n,[7 7]);
 mu = 10^4; tol = 1e-4; L = 1.01;
 tic
 [xDiff, fpError, xEst] = redPhaseGradient(A,b(:),mu,L,denoiser,tol,1500);
@@ -391,8 +392,8 @@ ylabel('FP error')
 grid on
 
 %% ================== NEW FASTER OPTIMIZER ==========================
-denoiser = medianDenoiserHandle(m,n,[7 3]);
-mu = 10^4; tol = 1e-4; L = 1.5;
+denoiser = medianDenoiserHandle(m,n,[7 7]);
+mu = 10^7; tol = 1e-4; L = 1.5;
 tic
 [xDiff, fpError, xEst] = redAcceleratedPG(A,b(:),mu,L,denoiser,tol,1500);
 toc,
@@ -506,7 +507,7 @@ for k = 1:1:max_iter
         v_est1=v_est((1:m),(1:ni));
         v_est2=v_est((1:m),(ni+1:2*ni));
         f_v_est1 = medfilt2(v_est1, [median median],'symmetric');
-        f_v_est2 = medfilt2(v_est2, [3 3],'symmetric');
+        f_v_est2 = medfilt2(v_est2, [median median],'symmetric');
 
         f_v_est = [f_v_est1 f_v_est2];
         f_v_est = f_v_est(:);
@@ -588,7 +589,8 @@ fpError = nan(maxIter,1);
 AtA = A'*A; Aty = A'*y;
 [xk,~] = cgs(AtA,Aty);
 N = length(xk);
-vk = zeros(N,1);
+fxk = denoiser(xk);
+vk = fxk/L - (1-L)/L*xk;
 xPrev = xk;
 for k = 1:maxIter
     % First step: argmin 1/2 || Ax - y ||^2 + lambda*L/2 || x - v ||^2
@@ -614,7 +616,8 @@ fpError = nan(maxIter,1);
 AtA = A'*A; Aty = A'*y;
 [xk,~] = cgs(AtA,Aty);
 N = length(xk);
-vk = zeros(N,1);
+fxk = denoiser(xk);
+vk = fxk/L - (1-L)/L*xk;
 xPrev = xk;
 tPrev = 1;
 for k = 1:maxIter
