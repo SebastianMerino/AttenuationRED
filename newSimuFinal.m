@@ -165,9 +165,14 @@ Metrics(iMu) = r;
 
 %% RED no weigths
 muRed = muVec(iMu);
+if muRed > 10^6
+    nIte = 30000;
+else
+    nIte = 1500;
+end
 tic
 % [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
-[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,muRed);
+[xChange ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,1e-8,size(A'*b(:),1),nIte,4,1,7,m,n,muRed);
 toc,
 BRED = reshape(u2(1:end/2)*NptodB,m,n);
 CRED = reshape(u2(end/2+1:end)*NptodB,m,n);

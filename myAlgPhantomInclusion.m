@@ -8,7 +8,7 @@ sampleFiles = dir(fullfile(dataDir,'T7*.mat'));
 refDir = fullfile(baseDir,'ref');
 refFiles = dir(fullfile(refDir,'*.mat'));
 
-resultsDir = 'Q:\smerino\REDjournalResults\newPhantom\anthony_med7';
+resultsDir = 'Q:\smerino\REDjournalResults\newPhantom\mixed';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 %% Hyperparameters
@@ -26,7 +26,7 @@ blockParams.xInf = -2;
 blockParams.xSup = 2;
 blockParams.zInf = 0.25;
 blockParams.zSup = 5;
-blockParams.blocksize = [15 15]*wl;
+blockParams.blocksize = [8 12]*wl;
 blockParams.overlap = 0.8;
 
 % Plotting constants
@@ -112,7 +112,6 @@ A1 = kron( 4*L*ufr , speye(m*n) );
 A2 = kron( ones(size(ufr)) , speye(m*n) );
 A = [A1 A2];
 mask = ones(m,n,p);
-tol = 1e-3;
 
 
 %% Metrics
@@ -146,7 +145,12 @@ groundTruthTargets = [0.97,0.95,0.95,0.55];
 % xlim([0 freqH*1.5/1e6])
 
 %% For looping
-muVec = 10.^(0:0.5:10);
+muVec = 10.^(0:0.5:7);
+tol = 1e-3;
+
+denoiser = medianDenoiserHandle(m,n,[7 3]);
+L = 1.01;
+
 iMu = 8;
 %%
 for iMu = 1:length(muVec)
@@ -180,19 +184,19 @@ Metrics(iMu) = r;
 
 %% RED no weigths
 muRed = muVec(iMu);
-if muRed > 1e9
-    nIte = 60000;
-elseif muRed > 1e6
-    nIte = 15000;
+if muRed > 1e6
+    maxIter = 15000;
 else
-    nIte = 1500;
+    maxIter = 1500;
 end
+[x0,~] = cgs(A'*A,A'*b(:));
+% x0 = zeros(2*m*n,1);
+denoiser = mixedDenoiserHandle(m,n,7,1/muRed);
 tic
-% [~ ,u2]  =  admmRedMedianv2(A,b(:),muRed,tol,2*m*n,200,5,m,n,muRed);
-[xChange ,~,u2] = admm_red_median(A'*A,A'*b(:),muRed,1e-8,size(A'*b(:),1),nIte,4,1,7,m,n,muRed);
+[~, ~, xk] = redPhaseGradient(A,b(:),muRed,L,denoiser,1e-6,maxIter,x0);
 toc,
-BRED = reshape(u2(1:end/2)*NptodB,m,n);
-CRED = reshape(u2(end/2+1:end)*NptodB,m,n);
+BRED = reshape(xk(1:end/2)*NptodB,m,n);
+CRED = reshape(xk(end/2+1:end)*NptodB,m,n);
 
 AttInterp = interp2(X,Z,BRED,Xq,Zq);
 r.meanInc = mean(AttInterp(inc),"omitnan");
@@ -350,11 +354,13 @@ toc
 BR = (reshape(Bn*NptodB,m,n));
 
 
+[x0,~] = cgs(A'*A,A'*b(:));
+% x0 = zeros(2*m*n,1);
+denoiser = mixedDenoiserHandle(m,n,7,1/optimMuRed);
 tic
-% [err_fp2 ,u2]  =  admmRedMedianv2(A,b(:),optimMuRed,tol,2*m*n,200,5,m,n,optimMuRed);
-[~ ,~,u2] = admm_red_median(A'*A,A'*b(:),optimMuRed,0.001,size(A'*b(:),1),1500,4,1,7,m,n,optimMuRed);
+[~, ~, xk] = redPhaseGradient(A,b(:),optimMuRed,L,denoiser,1e-6,maxIter,x0);
 toc,
-BRED = reshape(u2(1:end/2)*NptodB,m,n);
+BRED = reshape(xk(1:end/2)*NptodB,m,n);
 
 figure('Units','centimeters', 'Position',[5 5 18 6]);
 tl = tiledlayout(1,3, "Padding","tight");
