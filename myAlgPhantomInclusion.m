@@ -8,7 +8,7 @@ sampleFiles = dir(fullfile(dataDir,'T7*.mat'));
 refDir = fullfile(baseDir,'ref');
 refFiles = dir(fullfile(refDir,'*.mat'));
 
-resultsDir = 'Q:\smerino\REDjournalResults\newPhantom\mixed';
+resultsDir = 'Q:\smerino\REDjournalResults\newPhantom\mixed_bigBS';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 %% Hyperparameters
@@ -26,7 +26,7 @@ blockParams.xInf = -2;
 blockParams.xSup = 2;
 blockParams.zInf = 0.25;
 blockParams.zSup = 5;
-blockParams.blocksize = [8 12]*wl;
+blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Plotting constants

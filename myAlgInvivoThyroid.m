@@ -12,7 +12,7 @@ load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
 xBm = xBm*100; zBm = zBm'*100;
 
-big = true;
+big = false;
 if big 
     sampleName = sampleName + "Big";
 else

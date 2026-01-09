@@ -9,7 +9,7 @@ refFiles = dir(fullfile(refsDir,"RF_544_*.mat"));
 resultsDir = "Q:\smerino\REDjournalResults\newLiver\mixed";
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
-big = true;
+big = false;
 %% Hyperparameters
 % General parameters
 c0 = 1540;
