@@ -7,7 +7,7 @@ refDir = ['Q:\smerino\SavedData1209\bfWisc'];
 sampleFiles = dir(fullfile(dataDir,'*.mat'));
 refFiles = dir(fullfile(refDir,'*.mat'));
 
-resultsDir = 'Q:\smerino\REDjournalResults\layeredPhantom\mixedNew';
+resultsDir = 'Q:\smerino\REDjournalResults\layeredPhantom\mixedNewRefFinal';
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 big = true;
@@ -15,7 +15,7 @@ big = true;
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 4e6; freqH = 9e6; % wide bandwidth
+freqL = 4.5e6; freqH = 9e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
 alpha0Ref = 0.5246; gammaRef = 1;
 deadband = 0.2; % [cm]
@@ -37,7 +37,7 @@ blockParams.overlap = 0.8;
 
 % Measurement ROI
 c1x = 0; c1z = 3;
-roiL = 2.5; roiLz = 1.2;
+roiL = 2.4; roiLz = 1.1;
 groundTruth = 0.53;
 
 % Plotting constants
