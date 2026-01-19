@@ -45,7 +45,7 @@ p = length(f);
 % fprintf('\nFrequency range: %.2f - %.2f MHz\n',freq_L*1e-6,freq_H*1e-6)
 fprintf('Blocksize x: %.2f mm, z: %.2f mm\n',nx*dx*1e3,nz*dz*1e3)
 fprintf('Blocksize in pixels nx: %i, nz: %i\n',nx,nz);
-fprintf('Region of interest columns: %i, rows: %i\n\n',m,n);
+fprintf('Region of interest rows: %i, columns: %i\n\n',m,n);
 
 %% Spectrum
 % Windows for spectrum
