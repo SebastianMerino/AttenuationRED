@@ -3,14 +3,13 @@ startup,
 
 dataDir = "Q:\smerino\REDjournalResults\rf";
 
-sampleName = "simuLiver";
+sampleName = "simuThyroidHomo";
 resultsDir = "Q:\smerino\REDjournalResults\rf\myAlg\"+sampleName;
 if ~exist("resultsDir","dir"); mkdir(resultsDir); end
 
 
 load(fullfile(dataDir,sampleName+".mat"))
 zRf = zRf';
-zRef = zRef';
 xBm = xBm*100; zBm = zBm'*100;
 
 big = true;
@@ -22,36 +21,36 @@ end
 %% Hyperparameters
 % General parameters
 c0 = 1540;
-freqL = 2e6; freqH = 10e6; % wide bandwidth
+freqL = 3e6; freqH = 10e6; % wide bandwidth
 wl = 2*c0/(freqL + freqH);
 alpha0Ref = 0.4; gammaRef = 1;  % 0.4 for simulations, 0.53 for in vivo
 iAcq = 1;
-groundTruthTargets = 0.49;
+groundTruthTargets = 1.19;
 
 % Blocksize parameters
 if big
     blockParams.xInf = xRf(1); % 0.8
     blockParams.xSup = xRf(end);
     blockParams.zInf = zRf(1);
-    blockParams.zSup = 5.5;
+    blockParams.zSup = zRf(end);
 else
-    blockParams.xInf = xRf(1); % 0.8
-    blockParams.xSup = xRf(end);
-    blockParams.zInf = 3;
-    blockParams.zSup = 5.5;
+    blockParams.xInf = -1.1; % 0.8
+    blockParams.xSup = 1.7;
+    blockParams.zInf = 0.9;
+    blockParams.zSup = 2.2;
 end
 blockParams.blocksize = [15 15]*wl;
 blockParams.overlap = 0.8;
 
 % Measurement ROI
-c1x = 0; c1z = 4.3;
-roiL = 2.5; roiLz = 1.2;
+c1x = 0.3; c1z = 1.5;
+roiL = 2; roiLz = 0.6;
 
 % Plotting constants
 dynRange = [-60,0];
-attRange = [0,1.2];
+attRange = [0.2,1.6];
 bsRange = [-10,10];
-yLimits = [zBm(1),5.5];
+yLimits = [zBm(1),zBm(end)];
 
 NptodB = log10(exp(1))*20;
 %%
@@ -79,7 +78,7 @@ title('Sample power spectrum by depth')
 clear att_ref_map 
 att_ref_map(1,1,:) = alpha0Ref*f/NptodB;
 
-[SpRef,SdRef,~,~,~] = getSpectrum(ref,xRef,zRef,fs,blockParams);
+[SpRef,SdRef,~,~,~] = getSpectrum(ref,xRf,zRf,fs,blockParams);
 
 % Plotting spectra
 spectrumRefzf = db(squeeze(mean(SpRef/2+SdRef/2, 2)));
@@ -95,7 +94,6 @@ xlim([0 12])
 xlabel('f [MHz]')
 ylabel('z [cm]')
 title('Reference power spectrum by depth')
-
 
 %% Setting up system
 L = (zAcs(2) - zAcs(1))/(1 - blockParams.overlap)/2;   % (cm)
@@ -136,6 +134,7 @@ save_all_figures_to_directory(resultsDir,sampleName+"_spec");
 pause(0.1)
 close all,
 
+
 %% Metrics
 [X,Z] = meshgrid(xAcs,zAcs);
 [Xq,Zq] = meshgrid(xBm,zBm);
@@ -171,14 +170,14 @@ Metrics(iMu) = r;
 %% RED no weigths
 muRed = muVec(iMu);
 if muRed > 1e6
-    maxIter = 15000;
+    maxIter = 30000;
 else
     maxIter = 1500;
 end
 [x0,~] = cgs(A'*A,A'*b(:));
 denoiser = mixedDenoiserHandle(m,n,7,1/muRed);
 tic
-[~, ~, xk] = redPhaseGradient(A,b(:),muRed,Lred,denoiser,1e-6,maxIter,x0);
+[~, fpError, xk] = redPhaseGradient(A,b(:),muRed,Lred,denoiser,1e-6,maxIter,x0);
 toc,
 BRED = reshape(xk(1:end/2)*NptodB,m,n);
 CRED = reshape(xk(end/2+1:end)*NptodB,m,n);
@@ -263,7 +262,7 @@ ylim([0 0.9])
 
 [~,iMu] = min(tabRsld.maeInc);
 optimMuRsld = muVec(iMu);
-[~,iMu] = min(tabRed.maeInc,[],'omitmissing');
+[~,iMu] = min(tabRed.maeInc);
 optimMuRed = muVec(iMu);
 
 colors = lines(8);
@@ -309,9 +308,7 @@ tic
 [~, ~, xk] = redPhaseGradient(A,b(:),optimMuRed,Lred,denoiser,1e-6,maxIter,x0);
 toc,
 BRED = reshape(xk(1:end/2)*NptodB,m,n);
-
-
-figure('Units','centimeters', 'Position',[5 5 18 6]);
+figure('Units','centimeters', 'Position',[5 5 20 6]);
 tl = tiledlayout(1,3, "Padding","tight");
 
 t1 = nexttile;

@@ -7,7 +7,7 @@ mkdir(resultsDir)
 
 %%
 sample = "simuLiver";
-big = true;
+big = false;
 if big 
     roi = "Big";
 else

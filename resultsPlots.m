@@ -1,7 +1,7 @@
 startup,
 
 resultsDir = 'Q:\smerino\REDjournalResults\plots';
-samplesDir = 'Q:\smerino\REDjournalResults\rf';
+samplesDir = 'Q:\smerino\REDjournalResults\rf\myAlg';
 
 colors = lines(8);
 lineWidth = 1.5;
@@ -9,8 +9,8 @@ gt = 0.49;
 yLimits = [-0.2 1.2];
 xLimitsRsld = [-1 8];
 muLrsld = 10^0; muHrsld = 10^7;
-xLimitsRed = [2 11];
-muLred = 10^3; muHred = 10^10;
+xLimitsRed = [0 9];
+muLred = 10^1; muHred = 10^8;
 
 
 %% Simulated liver
